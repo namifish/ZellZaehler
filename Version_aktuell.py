@@ -6,8 +6,27 @@ import bcrypt
 from datetime import datetime
 import sqlite3
 import io
+import base64
 
-st.set_page_config(page_title="ZellZaehler", page_icon="🔬", layout="wide")
+st.set_page_config(page_title="ZellZähler", page_icon="🔬")
+
+# Funktion, um das Hintergrundbild festzulegen
+def set_background(png_file):
+    with open(png_file, "rb") as f:
+        data = f.read()
+    bin_str = base64.b64encode(data).decode()
+    page_bg_img = f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/png;base64,{bin_str}");
+        background-size: cover;
+    }}
+    </style>
+    """
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+# Hintergrund festlegen
+set_background('hintergrund.png')
 
 # Konfiguration
 USER_DATA_FILE = 'benutzerdaten.json'
@@ -89,9 +108,8 @@ def get_user_results(username):
 # Funktion zum Herunterladen von Daten als Excel
 def to_excel(df):
     output = io.BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, index=False, sheet_name='Sheet1')
-    writer.save()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
     processed_data = output.getvalue()
     return processed_data
 
@@ -100,7 +118,7 @@ init_db()
 init_user_data()
 
 # Streamlit-Anwendung
-st.title("ZellZaehler")
+st.title("ZellZähler")
 
 button_names = [
     "Pro", "Mye", "Meta", "Stab", "Seg", "Eos",
@@ -155,9 +173,11 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
             st.session_state['register'] = True
         if st.button("Als Gast eintreten"):
             st.session_state['guest'] = True
+            if 'guest_results' not in st.session_state:
+                st.session_state['guest_results'] = []
 else:
     st.sidebar.header("Navigation")
-    view = st.sidebar.radio("Ansicht wählen", ["Einführung", "Zählen", "Archiv"])
+    view = st.sidebar.radio("Ansicht wählen", ["Einführung", "Zählen", "Archiv", "Account"])
 
     if 'history' not in st.session_state:
         st.session_state['history'] = []
@@ -209,6 +229,15 @@ else:
         current_counts = {name: st.session_state[f'count_{name}'] for name in button_names}
         if 'username' in st.session_state:
             save_user_results(st.session_state['username'], sample_number, count_session, date_time, current_counts)
+            st.session_state['results'] = get_user_results(st.session_state['username'])
+        else:
+            guest_result = {
+                'sample_number': sample_number,
+                'count_session': count_session,
+                'date': date_time,
+                'counts': current_counts
+            }
+            st.session_state['guest_results'].append(guest_result)
         if count_session == 2:
             st.session_state['count_session'] = 1
             st.session_state['sample_number'] = ""
@@ -216,43 +245,54 @@ else:
             st.session_state['count_session'] += 1
         reset_counts()
 
-    def display_results():
-        if not st.session_state['results']:
+    def display_results(results):
+        if not results:
             st.write("Keine gespeicherten Ergebnisse.")
             return
         
-        for result in st.session_state['results']:
-            sample_number, count_session, date, counts_str = result
-            counts = dict(item.split(":") for item in counts_str.split(","))
-            counts = {key: int(value) for key, value in counts.items()}
-            
-            st.write(f"**Probenummer:** {sample_number}")
-            st.write(f"**Datum {count_session}. Zählung:** {date}")
-            
-            data = [[name, counts.get(name, 0)] for name in button_names]
-            counts_df = pd.DataFrame(data, columns=['Zellentyp', f'Anzahl {count_session}. Zählung'])
-            st.dataframe(counts_df, hide_index=True)
-            
-            if count_session == 2:
-                avg_data = [[name, (counts.get(name, 0) + counts.get(name, 0)) / 2] for name in button_names]
-                avg_df = pd.DataFrame(avg_data, columns=['Zellentyp', 'Durchschnitt'])
-                st.write("**Durchschnitt:**")
-                st.dataframe(avg_df, hide_index=True)
+        sample_numbers = list(set(result[0] for result in results))
+        selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
 
-                df_combined = pd.concat([counts_df.set_index('Zellentyp'), avg_df.set_index('Zellentyp')], axis=1).reset_index()
-                excel_data = to_excel(df_combined)
-                st.download_button(label='Download Excel', data=excel_data, file_name=f'{sample_number}_{count_session}.xlsx')
+        if selected_sample:
+            data = {name: [0, 0, 0] for name in button_names}  # Initialize with zeros
+
+            for result in results:
+                if result[0] == selected_sample:
+                    sample_number = result[0]
+                    count_session = result[1]
+                    date = result[2]
+                    counts_str = result[3]
+                    counts = dict(item.split(":") for item in counts_str.split(","))
+                    counts = {key: int(value) for key, value in counts.items()}
+
+                    if count_session == 1:
+                        for name in button_names:
+                            data[name][0] = counts.get(name, 0)
+                    else:
+                        for name in button_names:
+                            data[name][1] = counts.get(name, 0)
+
+            for name in button_names:
+                data[name][2] = (data[name][0] + data[name][1]) / 2  # Calculate the average
+
+            counts_df = pd.DataFrame(data, index=['1. Zählung', '2. Zählung', 'Durchschnitt']).T.reset_index()
+            counts_df.columns = ['Zellentyp', '1. Zählung', '2. Zählung', 'Durchschnitt']
+            st.dataframe(counts_df, hide_index=True)
+
+            excel_data = to_excel(counts_df)
+            st.download_button(label='Download Excel', data=excel_data, file_name=f'{selected_sample}.xlsx', key=f'download_{selected_sample}')
 
     if view == "Einführung":
         st.header("Einführung")
         st.write("""
-        Willkommen bei der ZellZähler-App. Diese App hilft Ihnen dabei, Zählungen von verschiedenen Zelltypen durchzuführen und zu speichern.
+        Willkommen bei der ZellZähler-App!
+        Diese App wurde in erster Linie für das Hämatologie Praktikum an der ZHAW erschaffen. Sie dient als Stütze für die Zählung von Leukozyten.
 
         **Funktionen:**
-        - **Probenummer eingeben**: Geben Sie eine eindeutige Probenummer ein, um eine neue Zählung zu starten oder eine bestehende zu bearbeiten.
-        - **Zählen**: Führen Sie die Zählungen durch, indem Sie die entsprechenden Knöpfe drücken.
-        - **Zelle hinzufügen**: Klicken Sie auf diesen Knopf, um die letzten drei Knöpfe umzubenennen.
-        - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände.
+        - **Probenummer eingeben**: Geben eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
+        - **Zählen**: Führen die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
+        - **Zelle hinzufügen**: Klicken auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
+        - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände. Bitte achte darauf, dass durch die Korrektur nicht mehr als 100 Zellen insgesamt gezählt werden. Im Notfall kannst du den letzten Schritt rückgängig machen.
         - **Rückgängig**: Macht den letzten Zählungsschritt rückgängig.
         - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
         - **Ergebnisse speichern**: Speichert die aktuellen Zählungsergebnisse.
@@ -342,29 +382,43 @@ else:
 
     elif view == "Archiv":
         st.header("Archivierte Ergebnisse")
-        sample_numbers = list(set(result[0] for result in st.session_state['results']))
-        selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
-        
-        if selected_sample:
-            for result in st.session_state['results']:
-                if result[0] == selected_sample:
-                    sample_number, count_session, date, counts_str = result
-                    counts = dict(item.split(":") for item in counts_str.split(","))
-                    counts = {key: int(value) for key, value in counts.items()}
-                    
-                    st.write(f"**Probenummer:** {sample_number}")
-                    st.write(f"**Datum {count_session}. Zählung:** {date}")
-                    
-                    data = [[name, counts.get(name, 0)] for name in button_names]
-                    counts_df = pd.DataFrame(data, columns=['Zellentyp', f'Anzahl {count_session}. Zählung'])
-                    st.dataframe(counts_df, hide_index=True)
-                    
-                    if count_session == 2:
-                        avg_data = [[name, (counts.get(name, 0) + counts.get(name, 0)) / 2] for name in button_names]
-                        avg_df = pd.DataFrame(avg_data, columns=['Zellentyp', 'Durchschnitt'])
-                        st.write("**Durchschnitt:**")
-                        st.dataframe(avg_df, hide_index=True)
+        if st.session_state['guest']:
+            display_results(st.session_state.get('guest_results', []))
+        else:
+            display_results(st.session_state.get('results', []))
+            
+    elif view == "Account":
+        st.header("Account-Verwaltung")
+        if st.button("Passwort ändern"):
+            st.session_state['change_password'] = True
+        if st.button("Account löschen"):
+            st.session_state['delete_account'] = True
 
-                        df_combined = pd.concat([counts_df.set_index('Zellentyp'), avg_df.set_index('Zellentyp')], axis=1).reset_index()
-                        excel_data = to_excel(df_combined)
-                        st.download_button(label='Download Excel', data=excel_data, file_name=f'{sample_number}_{count_session}.xlsx')
+        if 'change_password' in st.session_state and st.session_state['change_password']:
+            new_password = st.text_input("Neues Passwort", type="password")
+            confirm_password = st.text_input("Passwort bestätigen", type="password")
+            if st.button("Passwort ändern"):
+                if new_password and confirm_password:
+                    if new_password == confirm_password:
+                        users = load_user_data()
+                        users[st.session_state['username']]['password'] = encrypt_password(new_password)
+                        save_user_data(users)
+                        st.success("Passwort erfolgreich geändert.")
+                        st.session_state['change_password'] = False
+                    else:
+                        st.error("Passwörter stimmen nicht überein.")
+                else:
+                    st.error("Bitte fülle alle Felder aus.")
+            if st.button("Abbrechen"):
+                st.session_state['change_password'] = False
+
+        if 'delete_account' in st.session_state and st.session_state['delete_account']:
+            if st.button("Bestätigen"):
+                users = load_user_data()
+                del users[st.session_state['username']]
+                save_user_data(users)
+                st.success("Account erfolgreich gelöscht.")
+                st.session_state['authenticated'] = False
+                st.session_state['delete_account'] = False
+            if st.button("Abbrechen"):
+                st.session_state['delete_account'] = False
