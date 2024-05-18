@@ -118,7 +118,7 @@ init_db()
 init_user_data()
 
 # Streamlit-Anwendung
-st.title("ZellZähler")
+st.title("ZellZaehler")
 
 button_names = [
     "Pro", "Mye", "Meta", "Stab", "Seg", "Eos",
@@ -155,7 +155,6 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                 st.error("Bitte fülle alle erforderlichen Felder aus.")
         if st.button("Zurück zum Login"):
             st.session_state['register'] = False
-            st.experimental_rerun()  # Update session state
     else:
         st.subheader("Login")
         username = st.text_input("Benutzername")
@@ -172,10 +171,10 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                 st.error("Bitte gebe sowohl Benutzernamen als auch Passwort ein")
         if st.button("Registrieren"):
             st.session_state['register'] = True
-            st.experimental_rerun()  # Update session state
-        if st.button("Als Gast fortfahren"):
+        if st.button("Als Gast eintreten"):
             st.session_state['guest'] = True
-            st.experimental_rerun()  # Update session state
+            if 'guest_results' not in st.session_state:
+                st.session_state['guest_results'] = []
 else:
     st.sidebar.header("Navigation")
     view = st.sidebar.radio("Ansicht wählen", ["Einführung", "Zählen", "Archiv"])
@@ -230,6 +229,15 @@ else:
         current_counts = {name: st.session_state[f'count_{name}'] for name in button_names}
         if 'username' in st.session_state:
             save_user_results(st.session_state['username'], sample_number, count_session, date_time, current_counts)
+            st.session_state['results'] = get_user_results(st.session_state['username'])
+        else:
+            guest_result = {
+                'sample_number': sample_number,
+                'count_session': count_session,
+                'date': date_time,
+                'counts': current_counts
+            }
+            st.session_state['guest_results'].append(guest_result)
         if count_session == 2:
             st.session_state['count_session'] = 1
             st.session_state['sample_number'] = ""
@@ -237,15 +245,16 @@ else:
             st.session_state['count_session'] += 1
         reset_counts()
 
-    def display_results():
-        if not st.session_state['results']:
+    def display_results(results):
+        if not results:
             st.write("Keine gespeicherten Ergebnisse.")
             return
         
-        for result in st.session_state['results']:
-            sample_number, count_session, date, counts_str = result
-            counts = dict(item.split(":") for item in counts_str.split(","))
-            counts = {key: int(value) for key, value in counts.items()}
+        for result in results:
+            sample_number = result['sample_number']
+            count_session = result['count_session']
+            date = result['date']
+            counts = result['counts']
             
             st.write(f"**Probenummer:** {sample_number}")
             st.write(f"**Datum {count_session}. Zählung:** {date}")
@@ -357,44 +366,14 @@ else:
             if st.button('Zählung zurücksetzen'):
                 reset_counts()
 
-            if st.button('Zählung archivieren'):
+            if st.button('Zählung beenden - Archivieren'):
                 save_results()
                 st.info("Zählung archiviert und zurückgesetzt.")
                 reset_counts()
 
     elif view == "Archiv":
+        st.header("Archivierte Ergebnisse")
         if st.session_state['guest']:
-            st.warning("Archiv für Gästelogin nicht verfügbar.")
-            if st.button("Zurück zum Login"):
-                st.session_state['guest'] = False
-                st.experimental_rerun()
+            display_results(st.session_state.get('guest_results', []))
         else:
-            st.header("Archivierte Ergebnisse")
-            sample_numbers = list(set(result[0] for result in st.session_state['results']))
-            selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
-            
-            if selected_sample:
-                sample_data = [result for result in st.session_state['results'] if result[0] == selected_sample]
-                for count_session in [1, 2]:
-                    session_data = [result for result in sample_data if result[2] == count_session]
-                    if session_data:
-                        sample_number, count_session, date, counts_str = session_data[0]
-                        counts = dict(item.split(":") for item in counts_str.split(","))
-                        counts = {key: int(value) for key, value in counts.items()}
-
-                        st.write(f"**Probenummer:** {sample_number}")
-                        st.write(f"**Datum {count_session}. Zählung:** {date}")
-
-                        data = [[name, counts.get(name, 0)] for name in button_names]
-                        counts_df = pd.DataFrame(data, columns=['Zellentyp', f'Anzahl {count_session}. Zählung'])
-                        st.dataframe(counts_df, hide_index=True)
-
-                        if count_session == 2:
-                            avg_data = [[name, (counts.get(name, 0) + counts.get(name, 0)) / 2] for name in button_names]
-                            avg_df = pd.DataFrame(avg_data, columns=['Zellentyp', 'Durchschnitt'])
-                            st.write("**Durchschnitt:**")
-                            st.dataframe(avg_df, hide_index=True)
-
-                            df_combined = pd.concat([counts_df.set_index('Zellentyp'), avg_df.set_index('Zellentyp')], axis=1).reset_index()
-                            excel_data = to_excel(df_combined)
-                            st.download_button(label='Download Excel', data=excel_data, file_name=f'{sample_number}_{count_session}.xlsx')
+            display_results(st.session_state.get('results', []))
