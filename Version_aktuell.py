@@ -154,8 +154,6 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                 st.error("Please enter both username and password")
         if st.button("Register"):
             st.session_state['register'] = True
-        if st.button("Forgot password"):
-            st.info("Please contact support at support@example.com to reset your password.")
         if st.button("Enter as guest"):
             st.session_state['guest'] = True
 else:
