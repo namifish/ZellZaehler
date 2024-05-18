@@ -171,7 +171,7 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                 st.error("Bitte gebe sowohl Benutzernamen als auch Passwort ein")
         if st.button("Registrieren"):
             st.session_state['register'] = True
-        if st.button("Als Gast eintreten"):
+        if st.button("Weiter als Gast"):
             st.session_state['guest'] = True
             if 'guest_results' not in st.session_state:
                 st.session_state['guest_results'] = []
