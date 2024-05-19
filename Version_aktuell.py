@@ -28,7 +28,7 @@ def set_background(png_file):
 set_background('hintergrund.png')
 
 # Konfiguration
-USER_DATA_FILE = 'benutzerdaten.json'
+LOGIN_FILE = 'login_hashed_password_list.csv'
 
 # SQLite-Datenbank initialisieren
 def init_db():
@@ -47,19 +47,19 @@ def init_db():
 
 # Benutzerdaten initialisieren
 def init_user_data():
-    if not os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, 'w') as file:
-            json.dump({}, file, indent=4)
+    if not os.path.exists(LOGIN_FILE):
+        df = pd.DataFrame(columns=['username', 'password'])
+        df.to_csv(LOGIN_FILE, index=False)
 
 # Benutzerdaten laden
 def load_user_data():
-    with open(USER_DATA_FILE, 'r') as file:
-        return json.load(file)
+    if not os.path.exists(LOGIN_FILE):
+        init_user_data()
+    return pd.read_csv(LOGIN_FILE)
 
 # Benutzerdaten speichern
 def save_user_data(data):
-    with open(USER_DATA_FILE, 'w') as file:
-        json.dump(data, file, indent=4)
+    data.to_csv(LOGIN_FILE, index=False)
 
 # Passwort verschlüsseln
 def encrypt_password(password):
@@ -72,16 +72,19 @@ def verify_password(password, hashed):
 # Benutzerlogin überprüfen
 def verify_user(username, password):
     users = load_user_data()
-    if username in users and verify_password(password, users[username]['password']):
-        return True
+    if username in users['username'].values:
+        hashed_password = users[users['username'] == username]['password'].values[0]
+        if verify_password(password, hashed_password):
+            return True
     return False
 
 # Neuen Benutzer registrieren
 def register_user(username, password):
     users = load_user_data()
-    if username in users:
+    if username in users['username'].values:
         return False
-    users[username] = {'password': encrypt_password(password)}
+    new_user = pd.DataFrame([[username, encrypt_password(password)]], columns=['username', 'password'])
+    users = pd.concat([users, new_user], ignore_index=True)
     save_user_data(users)
     return True
 
