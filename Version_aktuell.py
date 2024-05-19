@@ -9,7 +9,6 @@ import io
 import base64
 
 st.set_page_config(page_title="ZellZähler", page_icon="🔬")
-
 # Funktion, um das Hintergrundbild festzulegen
 def set_background(png_file):
     with open(png_file, "rb") as f:
@@ -50,7 +49,7 @@ def init_db():
 def init_user_data():
     if not os.path.exists(USER_DATA_FILE):
         with open(USER_DATA_FILE, 'w') as file:
-            json.dump({}, file)
+            json.dump({}, file, indent=4)
 
 # Benutzerdaten laden
 def load_user_data():
@@ -60,7 +59,7 @@ def load_user_data():
 # Benutzerdaten speichern
 def save_user_data(data):
     with open(USER_DATA_FILE, 'w') as file:
-        json.dump(data, file)
+        json.dump(data, file, indent=4)
 
 # Passwort verschlüsseln
 def encrypt_password(password):
