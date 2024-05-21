@@ -123,8 +123,8 @@ init_user_data()
 st.title("ZellZähler")
 
 button_names = [
-    "Pro", "Mye", "Meta", "Stab", "Seg", "Eos",
-    "Baso", "Mono", "Ly", "Div1", "Div2", "Div3"
+    "Pro   ", "Mye   ", "Meta   ", "Stab   ", "Seg   ", "Eos   ",
+    "Baso   ", "Mono   ", "Ly   ", "Div1   ", "Div2   ", "Div3   "
 ]
 
 # Benutzer-Authentifizierung
@@ -143,40 +143,51 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
         reg_username = st.text_input("Wähle einen Benutzernamen")
         reg_password = st.text_input("Wähle ein Passwort", type="password")
         reg_confirm_password = st.text_input("Passwort bestätigen", type="password")
-        if st.button("Registrieren"):
-            if reg_username and reg_password and reg_confirm_password:
-                if reg_password == reg_confirm_password:
-                    if register_user(reg_username, reg_password):
-                        st.success("Registrierung erfolgreich. Du kannst dich jetzt einloggen.")
-                        st.session_state['register'] = False
+        register_columns = st.columns((0.5,3,3,0.5))
+
+        with register_columns[1]:
+            if st.button("Registrieren", use_container_width=True):
+                if reg_username and reg_password and reg_confirm_password:
+                    if reg_password == reg_confirm_password:
+                        if register_user(reg_username, reg_password):
+                            st.success("Registrierung erfolgreich. Du kannst dich jetzt einloggen.")
+                            st.session_state['register'] = False
+                        else:
+                            st.error("Benutzername existiert bereits. Bitte wähle einen anderen Benutzernamen.")
                     else:
-                        st.error("Benutzername existiert bereits. Bitte wähle einen anderen Benutzernamen.")
+                        st.error("Passwörter stimmen nicht überein.")
                 else:
-                    st.error("Passwörter stimmen nicht überein.")
-            else:
-                st.error("Bitte fülle alle erforderlichen Felder aus.")
-        if st.button("Zurück zum Login"):
-            st.session_state['register'] = False
+                    st.error("Bitte fülle alle erforderlichen Felder aus.")
+
+        with register_columns[2]:
+            if st.button("Zurück zum Login", use_container_width=True):
+                st.session_state['register'] = False
     else:
         st.subheader("Login")
         username = st.text_input("Benutzername")
         password = st.text_input("Passwort", type="password")
-        if st.button("Login"):
-            if username and password:
-                if verify_user(username, password):
-                    st.session_state['authenticated'] = True
-                    st.session_state['username'] = username
-                    st.session_state['results'] = get_user_results(username)
+        login_columns = st.columns((0.5,3,3,3,0.5))
+        with login_columns[1]:
+            if st.button("Login",use_container_width=True):
+                if username and password:
+                    if verify_user(username, password):
+                        st.session_state['authenticated'] = True
+                        st.session_state['username'] = username
+                        st.session_state['results'] = get_user_results(username)
+                    else:
+                        st.error("Ungültiger Benutzername oder Passwort")
                 else:
-                    st.error("Ungültiger Benutzername oder Passwort")
-            else:
-                st.error("Bitte gebe sowohl Benutzernamen als auch Passwort ein")
-        if st.button("Registrieren"):
-            st.session_state['register'] = True
-        if st.button("Weiter als Gast", help="Als Gast hast du keinen Zugriff auf das Archiv."):
-            st.session_state['guest'] = True
-            if 'guest_results' not in st.session_state:
-                st.session_state['guest_results'] = []
+                    st.error("Bitte gebe sowohl Benutzernamen als auch Passwort ein")
+
+        with login_columns[2]:
+            if st.button("Registrieren",use_container_width=True):
+                st.session_state['register'] = True
+
+        with login_columns[3]:
+            if st.button("Weiter als Gast", help="Als Gast hast du keinen Zugriff auf das Archiv.",use_container_width=True):
+                st.session_state['guest'] = True
+                if 'guest_results' not in st.session_state:
+                    st.session_state['guest_results'] = []
 else:
     st.sidebar.header("Navigation")
     view = st.sidebar.radio("Ansicht wählen", ["Einführung", "Zählen", "Archiv", "Account"])
@@ -305,40 +316,6 @@ else:
         Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
         """)
 
-        columns = st.columns((3,1.5,1.5,1.5,3))
-
- 
-
-        with columns[1]:
-
-            st.button("Button 1", use_container_width=True)
-
-            st.button("Button 4", use_container_width=True)
-
-            st.button("Button 7", use_container_width=True)
-
- 
-
-        with columns[2]:
-
-            st.button("Button 2", use_container_width=True)
-
-            st.button("Button 5", use_container_width=True)
-
-            st.button("Button 8", use_container_width=True)
-
- 
-
-        # No usage of 3rd position on the columns.
-
-        with columns[3]:
-
-            st.button("Button 3", use_container_width=True)
-
-            st.button("Button 6", use_container_width=True)
-
-            st.button("Button 9", use_container_width=True)
-
     elif view == "Zählen":
         st.session_state['sample_number'] = st.text_input("Probenummer eingeben", value=st.session_state['sample_number'])
         
@@ -347,15 +324,15 @@ else:
         else:
             st.subheader(f"Aktuelle Zählungssession: {st.session_state['count_session']}")
 
-            col1, col2 = st.columns(2)
+            top_columns = st.columns((0.5, 3, 0.5, 3, 0.5))
 
-            with col1:
-                if st.button('Korrigieren', help="Manuelle Korrektur der Zählerstände. Mit zweiten Klick den Korrekturmodus beenden."):
+            with top_columns[1]:
+                if st.button('Korrigieren', help="Manuelle Korrektur der Zählerstände. Mit zweitem Klick den Korrekturmodus beenden.", use_container_width=True):
                     st.session_state['edit_mode'] = not st.session_state['edit_mode']
                     st.rerun()
 
-            with col2:
-                if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle."):
+            with top_columns[3]:
+                if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle.", use_container_width=True):
                     st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
                     st.rerun()
             
@@ -384,8 +361,10 @@ else:
             if total_count > 100:
                 st.error("Die Gesamtzahl darf 100 nicht überschreiten. Bitte mache den letzten Schritt rückgängig oder korrigiere den Zählerstand.")
 
-            # 3x4 Grid für die Zählknöpfe
-            rows = [st.columns(3) for _ in range(4)]
+            
+            # Anpassen des Layouts mit spezifischen Spaltenbreiten
+
+            rows = [st.columns((1.5, 1.5, 1.5)) for _ in range(4)]  # 3x4 Grid für Buttons
             button_pressed = None
 
             for name in button_names:
@@ -397,7 +376,7 @@ else:
                     if name in ["Div1", "Div2", "Div3"]:
                         display_name = st.session_state['custom_names'][int(name[-1]) - 1]
                     button_label = f"{display_name}\n({st.session_state[f'count_{name}']})"
-                    if st.button(button_label, key=f'button_{name}'):
+                    if st.button(button_label, key=f'button_{name}', use_container_width=True):
                         if not st.session_state['edit_mode'] and not st.session_state['name_edit_mode']:
                             save_state()
                             button_pressed = name
@@ -406,7 +385,7 @@ else:
                         if new_count + sum(st.session_state[f'count_{n}'] for n in button_names if n != name) <= 100:
                             st.session_state[f'count_{name}'] = new_count
                         else:
-                            st.error("Die Gesamtzahl darf 100 nicht überschreiten")
+                            st.error("Die Gesamtzahl darf 100 nicht überschreiten.")
 
             #cols_per_row = 3
             #rows = [st.columns(cols_per_row) for _ in range(len(button_names) // cols_per_row + 1)]
@@ -446,37 +425,37 @@ else:
 
             st.markdown("<br>", unsafe_allow_html=True)
         
-            # 3x1 Grid für die letzten Knöpfe
-            col1, col2, col3 = st.columns(3)
 
-            with col1:
-                if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig."):
+            bottom_columns = st.columns((0.5, 3, 3, 3, 0.5))
+
+            with bottom_columns[1]:
+                if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig.", use_container_width=True):
                     undo_last_step()
                     st.rerun()
 
-            with col2:
-                if st.button('Zählung zurücksetzen', help="Setzt alle Zählerstände wieder auf null"):
+            with bottom_columns[2]:
+                if st.button('Zählung zurücksetzen', help="Setzt alle Zählerstände wieder auf null.", use_container_width=True):
                     reset_counts()
                     st.rerun()
 
-            with col3:
+            with bottom_columns[3]:
                 if st.session_state['count_session'] == 1:
-                    if st.button("Speichern & weiter zu 2. Zählung"):
+                    if st.button("Speichern & weiter zu 2. Zählung", use_container_width=True):
                         if total_count == 100:
                             save_results()
                             reset_counts()
                             st.session_state['count_session'] = 2
                         else:
-                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
+                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigiere die Zählerstände.", use_container_width=True)
 
                 if st.session_state['count_session'] == 2:
-                    if st.button("Zählung beenden & archivieren", help="Die gespeicherten Ergebnisse sind im Archiv sichtbar."):
+                    if st.button("Zählung beenden & archivieren", help="Die gespeicherten Ergebnisse sind im Archiv sichtbar.", use_container_width=True):
                         if total_count == 100:
                             save_results()
                             reset_counts()
                             st.session_state['count_session'] = 1
                         else:
-                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
+                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigiere die Zählerstände.")
 
             #if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig."):
                 #undo_last_step()
