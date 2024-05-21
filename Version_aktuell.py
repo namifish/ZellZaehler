@@ -173,7 +173,7 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                 st.error("Bitte gebe sowohl Benutzernamen als auch Passwort ein")
         if st.button("Registrieren"):
             st.session_state['register'] = True
-        if st.button("Weiter als Gast"):
+        if st.button("Weiter als Gast", help="Als Gast hast du keinen Zugriff auf das Archiv."):
             st.session_state['guest'] = True
             if 'guest_results' not in st.session_state:
                 st.session_state['guest_results'] = []
@@ -295,7 +295,7 @@ else:
         **Funktionen:**
         - **Probenummer eingeben**: Gib eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
         - **Zählen**: Führe die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
-        - **Neuer Zelltyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
+        - **Neuen Zelltyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
         - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände. Bitte achte darauf, dass durch die Korrektur nicht mehr als 100 Zellen insgesamt gezählt werden. Im Notfall kannst du den letzten Schritt rückgängig machen.
         - **Rückgängig**: Macht den letzten Zählungsschritt rückgängig.
         - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
@@ -311,43 +311,52 @@ else:
         if not st.session_state['sample_number']:
             st.warning("Bitte geben Sie eine Probenummer ein, um zu beginnen.")
         else:
-            st.write(f"Aktuelle Zählungssession: {st.session_state['count_session']}")
-            
-            if st.session_state['count_session'] == 1:
-                if st.button("Zu zweiter Zählung wechseln"):
-                    st.session_state['count_session'] = 2
-            else:
-                if st.button("Zu erster Zählung wechseln"):
-                    st.session_state['count_session'] = 1
-            
-            if st.button('Korrigieren'):
-                st.session_state['edit_mode'] = not st.session_state['edit_mode']
-                st.rerun()
+            st.subheader(f"Aktuelle Zählungssession: {st.session_state['count_session']}")
 
-            if st.button('Neuer Zelltyp definieren'):
-                st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
-                st.rerun()
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button('Korrigieren', help="Manuelle Korrektur der Zählerstände. Mit zweiten Klick den Korrekturmodus beenden."):
+                    st.session_state['edit_mode'] = not st.session_state['edit_mode']
+                    st.rerun()
+
+            with col2:
+                if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle."):
+                    st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
+                    st.rerun()
+            
+            #if st.button('Korrigieren', help="Manuelle Korrektur der Zählerstände. Mit zweiten Klick den Korrekturmodus beenden."):
+                #st.session_state['edit_mode'] = not st.session_state['edit_mode']
+                #st.rerun()
+
+            #if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle."):
+                #st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
+                #st.rerun()
 
             total_count = sum(st.session_state[f'count_{name}'] for name in button_names)
-            st.write(f"{total_count}/100")
+            st.header(f"{total_count}/100")
+
+            if total_count <= 100:
+                st.progress(total_count / 100)
 
             if total_count == 100:
                 st.success("100 Zellen gezählt!")
-                st.button('Rückgängig', disabled=True, key='undo_button_disabled')
-                st.button('Neuer Zelltyp definieren(disabled)', disabled=True, key='add_cell_button_disabled')
                 st.write("Ergebnisse:")
                 if st.session_state.get('result_df') is None:
                     result_df = pd.DataFrame({'Zellentyp': button_names, 'Anzahl': [st.session_state[f'count_{name}'] for name in button_names]})
                     st.session_state['result_df'] = result_df
                 st.dataframe(st.session_state['result_df'], hide_index=True)
 
-            cols_per_row = 3
-            rows = [st.columns(cols_per_row) for _ in range(len(button_names) // cols_per_row + 1)]
+            if total_count > 100:
+                st.error("Die Gesamtzahl darf 100 nicht überschreiten. Bitte mache den letzten Schritt rückgängig oder korrigiere den Zählerstand.")
+
+            # 3x4 Grid für die Zählknöpfe
+            rows = [st.columns(3) for _ in range(4)]
             button_pressed = None
 
             for name in button_names:
                 index = button_names.index(name)
-                row_index, col_index = divmod(index, cols_per_row)
+                row_index, col_index = divmod(index, 3)
                 col = rows[row_index][col_index]
                 with col:
                     display_name = name
@@ -360,7 +369,31 @@ else:
                             button_pressed = name
                     if st.session_state['edit_mode']:
                         new_count = st.number_input("Zähler korrigieren", value=st.session_state[f'count_{name}'], key=f'edit_{name}')
-                        st.session_state[f'count_{name}'] = new_count
+                        if new_count + sum(st.session_state[f'count_{n}'] for n in button_names if n != name) <= 100:
+                            st.session_state[f'count_{name}'] = new_count
+                        else:
+                            st.error("Die Gesamtzahl darf 100 nicht überschreiten")
+
+            #cols_per_row = 3
+            #rows = [st.columns(cols_per_row) for _ in range(len(button_names) // cols_per_row + 1)]
+            #button_pressed = None
+
+            #for name in button_names:
+                #index = button_names.index(name)
+                #row_index, col_index = divmod(index, cols_per_row)
+                #col = rows[row_index][col_index]
+                #with col:
+                    #display_name = name
+                    #if name in ["Div1", "Div2", "Div3"]:
+                        #display_name = st.session_state['custom_names'][int(name[-1]) - 1]
+                    #button_label = f"{display_name}\n({st.session_state[f'count_{name}']})"
+                    #if st.button(button_label, key=f'button_{name}'):
+                        #if not st.session_state['edit_mode'] and not st.session_state['name_edit_mode']:
+                            #save_state()
+                            #button_pressed = name
+                    #if st.session_state['edit_mode']:
+                        #new_count = st.number_input("Zähler korrigieren", value=st.session_state[f'count_{name}'], key=f'edit_{name}')
+                        #st.session_state[f'count_{name}'] = new_count
 
             if st.session_state['name_edit_mode']:
                 for i in range(3):
@@ -377,16 +410,65 @@ else:
                     st.error("Das Zählziel von 100 wurde bereits erreicht.")
                     st.rerun()
 
-            if st.button('Rückgängig', key='undo_button'):
-                undo_last_step()
+            st.markdown("<br>", unsafe_allow_html=True)
+        
+            # 3x1 Grid für die letzten Knöpfe
+            col1, col2, col3 = st.columns(3)
 
-            if st.button('Zählung zurücksetzen'):
-                reset_counts()
+            with col1:
+                if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig."):
+                    undo_last_step()
+                    st.rerun()
 
-            if st.button('Zählung beenden - Archivieren'):
-                save_results()
-                st.info("Zählung archiviert und zurückgesetzt.")
-                reset_counts()
+            with col2:
+                if st.button('Zählung zurücksetzen', help="Setzt alle Zählerstände wieder auf null"):
+                    reset_counts()
+                    st.rerun()
+
+            with col3:
+                if st.session_state['count_session'] == 1:
+                    if st.button("Speichern & weiter zu 2. Zählung"):
+                        if total_count == 100:
+                            save_results()
+                            reset_counts()
+                            st.session_state['count_session'] = 2
+                        else:
+                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
+
+                if st.session_state['count_session'] == 2:
+                    if st.button("Zählung beenden & archivieren", help="Die gespeicherten Ergebnisse sind im Archiv sichtbar."):
+                        if total_count == 100:
+                            save_results()
+                            reset_counts()
+                            st.session_state['count_session'] = 1
+                        else:
+                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
+
+            #if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig."):
+                #undo_last_step()
+                #st.rerun()
+
+            #if st.button('Zählung zurücksetzen', help="Setzt alle Zählerstände wieder auf null"):
+                #reset_counts()
+                #st.rerun()
+
+            #if st.session_state['count_session'] == 1:
+                #if st.button("Speichern & weiter zu 2. Zählung"):
+                    #if total_count == 100:
+                        #save_results()
+                        #reset_counts()
+                        #st.session_state['count_session'] = 2
+                    #else:
+                        #st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
+
+            #if st.session_state['count_session'] ==2:
+                #if st.button("Zählung beenden & archivieren", help="Die gespeicherten Ergebnisse sind im Archiv sichtbar."):
+                    #if total_count == 100:
+                        #save_results()
+                        #reset_counts()
+                        #st.session_state['count_session'] = 1
+                    #else:
+                        #st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
 
     elif view == "Archiv":
         st.header("Archivierte Ergebnisse")
