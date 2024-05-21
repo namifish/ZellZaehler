@@ -305,6 +305,40 @@ else:
         Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
         """)
 
+        columns = st.columns((3,1.5,1.5,1.5,3))
+
+ 
+
+        with columns[1]:
+
+            st.button("Button 1", use_container_width=True)
+
+            st.button("Button 4", use_container_width=True)
+
+            st.button("Button 7", use_container_width=True)
+
+ 
+
+        with columns[2]:
+
+            st.button("Button 2", use_container_width=True)
+
+            st.button("Button 5", use_container_width=True)
+
+            st.button("Button 8", use_container_width=True)
+
+ 
+
+        # No usage of 3rd position on the columns.
+
+        with columns[3]:
+
+            st.button("Button 3", use_container_width=True)
+
+            st.button("Button 6", use_container_width=True)
+
+            st.button("Button 9", use_container_width=True)
+
     elif view == "Zählen":
         st.session_state['sample_number'] = st.text_input("Probenummer eingeben", value=st.session_state['sample_number'])
         
