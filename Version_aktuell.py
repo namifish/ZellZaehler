@@ -288,7 +288,7 @@ else:
             st.download_button(label='Download Excel', data=excel_data, file_name=f'{selected_sample}.xlsx', key=f'download_{selected_sample}')
 
     if view == "Einführung":
-        st.header("Einführung🥼")
+        st.header("Einführung")
         st.write("""
         Willkommen bei der ZellZähler-App!
         Diese App wurde in erster Linie für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes.
@@ -301,7 +301,7 @@ else:
         - **Rückgängig**: Macht den letzten Zählungsschritt rückgängig.
         - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
         - **Ergebnisse speichern**: Speichert die aktuellen Zählungsergebnisse.
-        - **Archiv📁**: Zeigt alle gespeicherten Zählungsergebnisse an, die nach Probenummern durchsucht werden können.
+        - **Archiv**: Zeigt alle gespeicherten Zählungsergebnisse an, die nach Probenummern durchsucht werden können.
         """)
 
     elif view == "Zählen":
@@ -331,7 +331,7 @@ else:
             st.write(f"{total_count}/100")
 
             if total_count == 100:
-                st.success("100 Zellen gezählt!🎉")
+                st.success("100 Zellen gezählt!")
                 st.button('Rückgängig', disabled=True, key='undo_button_disabled')
                 st.button('Neuer Zelltyp definieren(disabled)', disabled=True, key='add_cell_button_disabled')
                 st.write("Ergebnisse:")
