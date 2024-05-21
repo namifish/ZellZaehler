@@ -209,6 +209,7 @@ else:
             st.error("Das Zählziel von 100 wurde bereits erreicht.")
         else:
             st.session_state[f'count_{name}'] += 1
+            st.rerun()
 
     def save_state():
         current_counts = {name: st.session_state[f'count_{name}'] for name in button_names}
@@ -219,10 +220,12 @@ else:
             last_state = st.session_state['history'].pop()
             for name in button_names:
                 st.session_state[f'count_{name}'] = last_state[name]
+            st.rerun()
 
     def reset_counts():
         for name in button_names:
             st.session_state[f'count_{name}'] = 0
+        st.rerun()
 
     def save_results():
         sample_number = st.session_state['sample_number']
@@ -288,17 +291,18 @@ else:
         st.header("Einführung")
         st.write("""
         Willkommen bei der ZellZähler-App!
-        Diese App wurde in erster Linie für das Hämatologie Praktikum an der ZHAW erschaffen. Sie dient als Stütze für die Zählung von Leukozyten.
-
+        
         **Funktionen:**
         - **Probenummer eingeben**: Gib eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
         - **Zählen**: Führe die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
-        - **Zelle hinzufügen**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
+        - **Neuer Zelltyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
         - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände. Bitte achte darauf, dass durch die Korrektur nicht mehr als 100 Zellen insgesamt gezählt werden. Im Notfall kannst du den letzten Schritt rückgängig machen.
         - **Rückgängig**: Macht den letzten Zählungsschritt rückgängig.
         - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
         - **Ergebnisse speichern**: Speichert die aktuellen Zählungsergebnisse.
         - **Archiv**: Zeigt alle gespeicherten Zählungsergebnisse an, die nach Probenummern durchsucht werden können.
+
+        Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
         """)
 
     elif view == "Zählen":
@@ -318,9 +322,11 @@ else:
             
             if st.button('Korrigieren'):
                 st.session_state['edit_mode'] = not st.session_state['edit_mode']
+                st.rerun()
 
-            if st.button('Zelle hinzufügen'):
+            if st.button('Neuer Zelltyp definieren'):
                 st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
+                st.rerun()
 
             total_count = sum(st.session_state[f'count_{name}'] for name in button_names)
             st.write(f"{total_count}/100")
@@ -328,7 +334,7 @@ else:
             if total_count == 100:
                 st.success("100 Zellen gezählt!")
                 st.button('Rückgängig', disabled=True, key='undo_button_disabled')
-                st.button('Zelle hinzufügen (disabled)', disabled=True, key='add_cell_button_disabled')
+                st.button('Neuer Zelltyp definieren(disabled)', disabled=True, key='add_cell_button_disabled')
                 st.write("Ergebnisse:")
                 if st.session_state.get('result_df') is None:
                     result_df = pd.DataFrame({'Zellentyp': button_names, 'Anzahl': [st.session_state[f'count_{name}'] for name in button_names]})
