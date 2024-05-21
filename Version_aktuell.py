@@ -291,8 +291,7 @@ else:
         st.header("Einführung")
         st.write("""
         Willkommen bei der ZellZähler-App!
-        Diese App wurde in erster Linie für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes.
-
+        
         **Funktionen:**
         - **Probenummer eingeben**: Gib eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
         - **Zählen**: Führe die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
@@ -302,6 +301,8 @@ else:
         - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
         - **Ergebnisse speichern**: Speichert die aktuellen Zählungsergebnisse.
         - **Archiv**: Zeigt alle gespeicherten Zählungsergebnisse an, die nach Probenummern durchsucht werden können.
+
+        Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
         """)
 
     elif view == "Zählen":
