@@ -7,8 +7,6 @@ import sqlite3
 import io
 import base64
 import time
-from github_contents import GithubContents
-github = GithubContents("your username", "your repo", "your token")
 
 # Verwende secrets für die Dateipfade
 LOGIN_FILE = st.secrets["data"]["LOGIN_FILE"]
