@@ -184,7 +184,7 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                 st.session_state['register'] = True
 
         with login_columns[3]:
-            if st.button("Weiter als Gast", help="Als Gast hast du keinen Zugriff auf das Archiv.",use_container_width=True):
+            if st.button("Weiter als Gast",use_container_width=True):
                 st.session_state['guest'] = True
                 if 'guest_results' not in st.session_state:
                     st.session_state['guest_results'] = []
