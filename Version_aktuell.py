@@ -7,6 +7,14 @@ import sqlite3
 import io
 import base64
 import time
+from github_contents import GithubContents
+
+# GitHub-Verbindung herstellen
+github = GithubContents(
+    st.secrets["github"]["owner"],
+    st.secrets["github"]["repo"],
+    st.secrets["github"]["token"]
+)
 
 # Verwende secrets für die Dateipfade
 LOGIN_FILE = st.secrets["data"]["LOGIN_FILE"]
@@ -47,21 +55,38 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Benutzerdaten initialisieren
 def init_user_data():
-    if not os.path.exists(LOGIN_FILE):
+    try:
+        github.read_text(LOGIN_FILE)
+    except github.NotFound:
+        # Datei existiert nicht, initialisieren Sie eine neue DataFrame und speichern Sie sie
         df = pd.DataFrame(columns=['username', 'password'])
-        df.to_csv(LOGIN_FILE, index=False)
+        save_user_data(df)
+    except Exception as e:
+        st.error(f"Fehler beim Initialisieren der Benutzerdaten: {e}")
 
-# Benutzerdaten laden
+
 def load_user_data():
-    if not os.path.exists(LOGIN_FILE):
-        init_user_data()
-    return pd.read_csv(LOGIN_FILE)
+    try:
+        csv_content = github.read_text(LOGIN_FILE)
+        users = pd.read_csv(io.StringIO(csv_content))
+    except Exception as e:
+        st.error(f"Fehler beim Laden der Benutzerdaten: {e}")
+        users = pd.DataFrame(columns=['username', 'password'])
+    return users
 
-# Benutzerdaten speichern
+
 def save_user_data(data):
-    data.to_csv(LOGIN_FILE, index=False)
+    csv_buffer = io.StringIO()
+    data.to_csv(csv_buffer, index=False)
+    try:
+        file_content = github.read_text(LOGIN_FILE)
+        github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Update user data")
+    except github.NotFound:
+        github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Create user data file")
+    except Exception as e:
+        st.error(f"Fehler beim Speichern der Benutzerdaten: {e}")
+
 
 # Passwort verschlüsseln
 def encrypt_password(password):
