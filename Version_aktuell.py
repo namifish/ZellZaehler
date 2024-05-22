@@ -265,31 +265,50 @@ else:
         if not results:
             st.write("Keine gespeicherten Ergebnisse.")
             return
-        
-        sample_numbers = list(set(result[0] for result in results))
-        selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
+
+        if isinstance(results[0], dict):  # Gast-Ergebnisse
+            sample_numbers = list(set(result['sample_number'] for result in results))
+            selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
+        else:  # Registrierte Benutzer-Ergebnisse
+            sample_numbers = list(set(result[0] for result in results))
+            selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
 
         if selected_sample:
-            data = {name: [0, 0, 0] for name in button_names}  # Initialize with zeros
+            data = {name: [0, 0, 0] for name in button_names}  # Mit Nullen initialisieren
 
-            for result in results:
-                if result[0] == selected_sample:
-                    sample_number = result[0]
-                    count_session = result[1]
-                    date = result[2]
-                    counts_str = result[3]
-                    counts = dict(item.split(":") for item in counts_str.split(","))
-                    counts = {key: int(value) for key, value in counts.items()}
+            if isinstance(results[0], dict):  # Gast-Ergebnisse
+                for result in results:
+                    if result['sample_number'] == selected_sample:
+                        sample_number = result['sample_number']
+                        count_session = result['count_session']
+                        date = result['date']
+                        counts = result['counts']
 
-                    if count_session == 1:
-                        for name in button_names:
-                            data[name][0] = counts.get(name, 0)
-                    else:
-                        for name in button_names:
-                            data[name][1] = counts.get(name, 0)
+                        if count_session == 1:
+                            for name in button_names:
+                                data[name][0] = counts.get(name, 0)
+                        else:
+                            for name in button_names:
+                                data[name][1] = counts.get(name, 0)
+            else:  # Registrierte Benutzer-Ergebnisse
+                for result in results:
+                    if result[0] == selected_sample:
+                        sample_number = result[0]
+                        count_session = result[1]
+                        date = result[2]
+                        counts_str = result[3]
+                        counts = dict(item.split(":") for item in counts_str.split(","))
+                        counts = {key: int(value) for key, value in counts.items()}
+
+                        if count_session == 1:
+                            for name in button_names:
+                                data[name][0] = counts.get(name, 0)
+                        else:
+                            for name in button_names:
+                                data[name][1] = counts.get(name, 0)
 
             for name in button_names:
-                data[name][2] = (data[name][0] + data[name][1]) / 2  # Calculate the average
+                data[name][2] = (data[name][0] + data[name][1]) / 2  # Durchschnitt berechnen
 
             counts_df = pd.DataFrame(data, index=['1. Zählung', '2. Zählung', 'Durchschnitt']).T.reset_index()
             counts_df.columns = ['Zellentyp', '1. Zählung', '2. Zählung', 'Durchschnitt']
@@ -297,6 +316,7 @@ else:
 
             excel_data = to_excel(counts_df)
             st.download_button(label='Download Excel', data=excel_data, file_name=f'{selected_sample}.xlsx', key=f'download_{selected_sample}')
+
 
     if view == "Einführung":
         st.header("Einführung")
@@ -324,14 +344,18 @@ else:
         else:
             st.subheader(f"Aktuelle Zählungssession: {st.session_state['count_session']}")
 
-            top_columns = st.columns((0.5, 3, 0.5, 3, 0.5))
+            top_columns = st.columns((2, 2, 3))
 
+            with top_columns[0]:
+                if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig.", use_container_width=True):
+                    undo_last_step()
+                    st.rerun()
             with top_columns[1]:
                 if st.button('Korrigieren', help="Manuelle Korrektur der Zählerstände. Mit zweitem Klick den Korrekturmodus beenden.", use_container_width=True):
                     st.session_state['edit_mode'] = not st.session_state['edit_mode']
                     st.rerun()
 
-            with top_columns[3]:
+            with top_columns[2]:
                 if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle.", use_container_width=True):
                     st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
                     st.rerun()
@@ -426,19 +450,14 @@ else:
             st.markdown("<br>", unsafe_allow_html=True)
         
 
-            bottom_columns = st.columns((0.5, 3, 3, 3, 0.5))
+            bottom_columns = st.columns((2, 2, 2))
 
-            with bottom_columns[1]:
-                if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig.", use_container_width=True):
-                    undo_last_step()
-                    st.rerun()
-
-            with bottom_columns[2]:
+            with bottom_columns[0]:
                 if st.button('Zählung zurücksetzen', help="Setzt alle Zählerstände wieder auf null.", use_container_width=True):
                     reset_counts()
                     st.rerun()
 
-            with bottom_columns[3]:
+            with bottom_columns[2]:
                 if st.session_state['count_session'] == 1:
                     if st.button("Speichern & weiter zu 2. Zählung", use_container_width=True):
                         if total_count == 100:
@@ -446,7 +465,7 @@ else:
                             reset_counts()
                             st.session_state['count_session'] = 2
                         else:
-                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigiere die Zählerstände.", use_container_width=True)
+                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigiere die Zählerstände.")
 
                 if st.session_state['count_session'] == 2:
                     if st.button("Zählung beenden & archivieren", help="Die gespeicherten Ergebnisse sind im Archiv sichtbar.", use_container_width=True):
