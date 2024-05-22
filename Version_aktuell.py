@@ -201,9 +201,9 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                         st.session_state['results'] = get_user_results(username)
                         st.rerun()
                     else:
-                        st.error("Ungültiger Benutzername oder Passwort")
+                        st.error("Ungültiger Benutzername oder Passwort.")
                 else:
-                    st.error("Bitte gebe sowohl Benutzernamen als auch Passwort ein")
+                    st.error("Bitte gib sowohl Benutzernamen als auch Passwort ein.")
 
         with login_columns[2]:
             if st.button("Registrieren",use_container_width=True):
@@ -213,7 +213,6 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
         with login_columns[3]:
             if st.button("Weiter als Gast",use_container_width=True):
                 st.session_state['guest'] = True
-                st.rerun()
                 if 'guest_results' not in st.session_state:
                     st.session_state['guest_results'] = []
                     st.rerun()
@@ -512,6 +511,7 @@ else:
     elif view == "Archiv":
         st.header("Archivierte Ergebnisse")
         if st.session_state['guest']:
+            st.warning("Archivierte Daten im Gästelogin können verlorengehen.")
             display_results(st.session_state.get('guest_results', []))
         else:
             display_results(st.session_state.get('results', []))
@@ -520,7 +520,7 @@ else:
     elif view == "Account":
         st.header("Account-Verwaltung")
         if st.session_state['guest']:
-            st.warning("Nicht angemeldet. Achtung, die archivierten Daten aus dem Gästelogin können verlorengehen.")
+            st.warning("Nicht angemeldet. Achtung: Archivierte Daten im Gästelogin können verlorengehen.")
             if st.button("Zurück zum Login", key="guest_back_to_login"):
                 st.session_state['authenticated'] = False
                 st.session_state['guest'] = False
@@ -588,14 +588,14 @@ else:
                         else:
                             st.error("Benutzername existiert bereits.")
                     else:
-                        st.error("Bitte gebe einen neuen Benutzernamen ein.")
+                        st.error("Bitte gib einen neuen Benutzernamen ein.")
                 if st.button("Abbrechen", key="cancel_change_username"):
                     st.session_state['change_username'] = False
                     st.rerun()
 
             # Account löschen
             if 'delete_account' in st.session_state and st.session_state['delete_account']:
-                st.error("Achtung: Alle deine Daten gehen verloren.")
+                st.warning("Achtung: Alle archivierten Daten gehen verloren.")
                 if st.button("Account löschen: bestätigen", key="confirm_delete_account"):
                     users = load_user_data()
                     users = users[users['username'] != st.session_state['username']]
