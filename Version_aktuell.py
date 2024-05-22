@@ -7,7 +7,12 @@ import sqlite3
 import io
 import base64
 
+# Verwende secrets für die Dateipfade
+LOGIN_FILE = st.secrets["data"]["LOGIN_FILE"]
+DB_FILE = st.secrets["data"]["DB_FILE"]
+
 st.set_page_config(page_title="ZellZähler", page_icon="🔬")
+
 # Funktion, um das Hintergrundbild festzulegen
 def set_background(png_file):
     with open(png_file, "rb") as f:
@@ -26,12 +31,9 @@ def set_background(png_file):
 # Hintergrund festlegen (transparente Version)
 set_background('hintergrundtransparent.png')
 
-# Konfiguration
-LOGIN_FILE = 'login_hashed_password_list.csv'
-
 # SQLite-Datenbank initialisieren
 def init_db():
-    conn = sqlite3.connect('zellzaehler.db')
+    conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS results (
                 username TEXT,
@@ -89,7 +91,7 @@ def register_user(username, password):
 
 # Benutzerergebnisse speichern
 def save_user_results(username, sample_number, count_session, date_time, current_counts):
-    conn = sqlite3.connect('zellzaehler.db')
+    conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     counts_str = ','.join(f'{key}:{value}' for key, value in current_counts.items())
     c.execute('''INSERT INTO results (username, sample_number, count_session, date, counts)
@@ -99,7 +101,7 @@ def save_user_results(username, sample_number, count_session, date_time, current
 
 # Benutzerergebnisse abrufen
 def get_user_results(username):
-    conn = sqlite3.connect('zellzaehler.db')
+    conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('SELECT sample_number, count_session, date, counts FROM results WHERE username=?', (username,))
     results = c.fetchall()
