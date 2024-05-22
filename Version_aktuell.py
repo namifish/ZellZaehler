@@ -71,10 +71,11 @@ def init_db():
 def init_user_data():
     if not os.path.exists(LOGIN_FILE):
         df = pd.DataFrame(columns=['username', 'password'])
-        df.to_csv(LOGIN_FILE, index=False)
-        st.write(f"Benutzerdaten erfolgreich initialisiert in {LOGIN_FILE}.")
-    except Exception as e:
-        st.write(f"Fehler beim Initialisieren der Benutzerdaten: {e}")
+        try:
+            df.to_csv(LOGIN_FILE, index=False)
+            st.write(f"Benutzerdaten erfolgreich initialisiert in {LOGIN_FILE}.")
+        except Exception as e:
+            st.write(f"Fehler beim Initialisieren der Benutzerdaten: {e}")
 
 # Benutzerdaten laden
 def load_user_data():
