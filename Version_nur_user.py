@@ -40,7 +40,22 @@ def set_background(png_file):
 # Hintergrund festlegen (transparente Version)
 set_background('images/hintergrundtransparent.png')
 
-# Funktionen zum Initialisieren, Laden und Speichern der Benutzerdaten
+# SQLite-Datenbank initialisieren
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS results (
+                username TEXT,
+                sample_number TEXT,
+                count_session INTEGER,
+                date TEXT,
+                counts TEXT,
+                FOREIGN KEY(username) REFERENCES users(username)
+              )''')
+    conn.commit()
+    conn.close()
+
+# Benutzerdaten initialisieren
 def init_user_data():
     try:
         github.read_text(LOGIN_FILE)
@@ -51,6 +66,7 @@ def init_user_data():
     except Exception as e:
         st.error(f"Fehler beim Initialisieren der Benutzerdaten: {e}")
 
+# Benutzerdaten laden
 def load_user_data():
     try:
         csv_content = github.read_text(LOGIN_FILE)
@@ -60,83 +76,17 @@ def load_user_data():
         users = pd.DataFrame(columns=['username', 'password'])
     return users
 
+# Benutzerdaten speichern
 def save_user_data(data):
     csv_buffer = io.StringIO()
     data.to_csv(csv_buffer, index=False)
     try:
+        file_content = github.read_text(LOGIN_FILE)
         github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Update user data")
     except github.NotFound:
         github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Create user data file")
     except Exception as e:
         st.error(f"Fehler beim Speichern der Benutzerdaten: {e}")
-
-# Funktionen zum Initialisieren, Laden und Speichern der Datenbank
-def init_db():
-    try:
-        github.read_text(DB_FILE + ".csv")
-    except github.NotFound:
-        # Datei existiert nicht, initialisieren Sie eine neue Datenbank
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS results (
-                    username TEXT,
-                    sample_number TEXT,
-                    count_session INTEGER,
-                    date TEXT,
-                    counts TEXT,
-                    FOREIGN KEY(username) REFERENCES users(username)
-                  )''')
-        conn.commit()
-        conn.close()
-        export_db_to_csv()
-    except Exception as e:
-        st.error(f"Fehler beim Initialisieren der Datenbank: {e}")
-
-def load_db():
-    import_csv_to_db()
-
-def save_db():
-    export_db_to_csv()
-
-def export_db_to_csv():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM results")
-    rows = cursor.fetchall()
-    conn.close()
-
-    df = pd.DataFrame(rows, columns=['username', 'sample_number', 'count_session', 'date', 'counts'])
-    csv_buffer = io.StringIO()
-    df.to_csv(csv_buffer, index=False)
-    github.write_text(DB_FILE + ".csv", csv_buffer.getvalue(), "Update database file")
-
-def import_csv_to_db():
-    try:
-        csv_content = github.read_text(DB_FILE + ".csv")
-        df = pd.read_csv(io.StringIO(csv_content))
-
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS results (
-                          username TEXT,
-                          sample_number TEXT,
-                          count_session INTEGER,
-                          date TEXT,
-                          counts TEXT,
-                          FOREIGN KEY(username) REFERENCES users(username)
-                        )''')
-        conn.commit()
-
-        df.to_sql('results', conn, if_exists='replace', index=False)
-        conn.close()
-    except github.NotFound:
-        init_db()  # Wenn die Datei nicht existiert, initialisieren Sie eine neue Datenbank
-    except Exception as e:
-        st.error(f"Fehler beim Laden der Datenbank: {e}")
-
-# Initialisieren der Datenbank und Benutzerdaten
-init_user_data()
-load_db()
 
 # Passwort verschlüsseln
 def encrypt_password(password):

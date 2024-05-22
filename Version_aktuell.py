@@ -8,13 +8,7 @@ import io
 import base64
 import time
 from github_contents import GithubContents
-
-# GitHub-Verbindung herstellen
-github = GithubContents(
-    st.secrets["github"]["owner"],
-    st.secrets["github"]["repo"],
-    st.secrets["github"]["token"]
-)
+github = GithubContents("your username", "your repo", "your token")
 
 # Verwende secrets für die Dateipfade
 LOGIN_FILE = st.secrets["data"]["LOGIN_FILE"]
@@ -40,104 +34,36 @@ def set_background(png_file):
 # Hintergrund festlegen (transparente Version)
 set_background('images/hintergrundtransparent.png')
 
-# Funktionen zum Initialisieren, Laden und Speichern der Benutzerdaten
-def init_user_data():
-    try:
-        github.read_text(LOGIN_FILE)
-    except github.NotFound:
-        # Datei existiert nicht, initialisieren Sie eine neue DataFrame und speichern Sie sie
-        df = pd.DataFrame(columns=['username', 'password'])
-        save_user_data(df)
-    except Exception as e:
-        st.error(f"Fehler beim Initialisieren der Benutzerdaten: {e}")
-
-def load_user_data():
-    try:
-        csv_content = github.read_text(LOGIN_FILE)
-        users = pd.read_csv(io.StringIO(csv_content))
-    except Exception as e:
-        st.error(f"Fehler beim Laden der Benutzerdaten: {e}")
-        users = pd.DataFrame(columns=['username', 'password'])
-    return users
-
-def save_user_data(data):
-    csv_buffer = io.StringIO()
-    data.to_csv(csv_buffer, index=False)
-    try:
-        file_content = github.read_text(LOGIN_FILE)
-        github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Update user data")
-    except github.NotFound:
-        github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Create user data file")
-    except Exception as e:
-        st.error(f"Fehler beim Speichern der Benutzerdaten: {e}")
-
-# Funktionen zum Initialisieren, Laden und Speichern der Datenbank
+# SQLite-Datenbank initialisieren
 def init_db():
-    try:
-        github.read_text(DB_FILE + ".csv")
-    except github.NotFound:
-        # Datei existiert nicht, initialisieren Sie eine neue Datenbank
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS results (
-                    username TEXT,
-                    sample_number TEXT,
-                    count_session INTEGER,
-                    date TEXT,
-                    counts TEXT,
-                    FOREIGN KEY(username) REFERENCES users(username)
-                  )''')
-        conn.commit()
-        conn.close()
-        export_db_to_csv()
-    except Exception as e:
-        st.error(f"Fehler beim Initialisieren der Datenbank: {e}")
-
-def load_db():
-    import_csv_to_db()
-
-def save_db():
-    export_db_to_csv()
-
-def export_db_to_csv():
     conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM results")
-    rows = cursor.fetchall()
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS results (
+                username TEXT,
+                sample_number TEXT,
+                count_session INTEGER,
+                date TEXT,
+                counts TEXT,
+                FOREIGN KEY(username) REFERENCES users(username)
+              )''')
+    conn.commit()
     conn.close()
 
-    df = pd.DataFrame(rows, columns=['username', 'sample_number', 'count_session', 'date', 'counts'])
-    csv_buffer = io.StringIO()
-    df.to_csv(csv_buffer, index=False)
-    github.write_text(DB_FILE + ".csv", csv_buffer.getvalue(), "Update database file")
+# Benutzerdaten initialisieren
+def init_user_data():
+    if not os.path.exists(LOGIN_FILE):
+        df = pd.DataFrame(columns=['username', 'password'])
+        df.to_csv(LOGIN_FILE, index=False)
 
-def import_csv_to_db():
-    try:
-        csv_content = github.read_text(DB_FILE + ".csv")
-        df = pd.read_csv(io.StringIO(csv_content))
+# Benutzerdaten laden
+def load_user_data():
+    if not os.path.exists(LOGIN_FILE):
+        init_user_data()
+    return pd.read_csv(LOGIN_FILE)
 
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS results (
-                          username TEXT,
-                          sample_number TEXT,
-                          count_session INTEGER,
-                          date TEXT,
-                          counts TEXT,
-                          FOREIGN KEY(username) REFERENCES users(username)
-                        )''')
-        conn.commit()
-
-        df.to_sql('results', conn, if_exists='replace', index=False)
-        conn.close()
-    except github.NotFound:
-        init_db()  # Wenn die Datei nicht existiert, initialisieren Sie eine neue Datenbank
-    except Exception as e:
-        st.error(f"Fehler beim Laden der Datenbank: {e}")
-
-# Initialisieren der Datenbank und Benutzerdaten
-init_user_data()
-load_db()
+# Benutzerdaten speichern
+def save_user_data(data):
+    data.to_csv(LOGIN_FILE, index=False)
 
 # Passwort verschlüsseln
 def encrypt_password(password):
@@ -165,18 +91,6 @@ def register_user(username, password):
     users = pd.concat([users, new_user], ignore_index=True)
     save_user_data(users)
     return True
-
-def delete_user(username):
-    users = load_user_data()
-    users = users[users['username'] != username]
-    save_user_data(users)
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('DELETE FROM results WHERE username = ?', (username,))
-    conn.commit()
-    conn.close()
-    save_db()  # Speichern Sie die aktualisierte Datenbank zurück zu GitHub
 
 # Benutzerergebnisse speichern
 def save_user_results(username, sample_number, count_session, date_time, current_counts):
@@ -604,7 +518,7 @@ else:
         else:
             display_results(st.session_state.get('results', []))
             
-    # Account-Verwaltung
+    # Ansicht "Account"
     elif view == "Account":
         st.header("Account-Verwaltung")
         if st.session_state['guest']:
@@ -672,6 +586,7 @@ else:
                             st.session_state['change_username'] = False
                             time.sleep(4)
                             st.rerun()
+
                         else:
                             st.error("Benutzername existiert bereits.")
                     else:
@@ -684,7 +599,9 @@ else:
             if 'delete_account' in st.session_state and st.session_state['delete_account']:
                 st.warning("Achtung: Alle archivierten Daten gehen verloren.")
                 if st.button("Account löschen: bestätigen", key="confirm_delete_account"):
-                    delete_user(st.session_state['username'])
+                    users = load_user_data()
+                    users = users[users['username'] != st.session_state['username']]
+                    save_user_data(users)
                     st.success("Account erfolgreich gelöscht. Du wirst automatisch zum Login weitergeleitet.")
                     st.session_state['authenticated'] = False
                     st.session_state['delete_account'] = False
@@ -692,4 +609,3 @@ else:
                     st.rerun()
                 if st.button("Abbrechen", key="cancel_delete_account"):
                     st.session_state['delete_account'] = False
-                    st.rerun()

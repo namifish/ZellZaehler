@@ -64,39 +64,41 @@ def save_user_data(data):
     csv_buffer = io.StringIO()
     data.to_csv(csv_buffer, index=False)
     try:
+        file_content = github.read_text(LOGIN_FILE)
         github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Update user data")
     except github.NotFound:
         github.write_text(LOGIN_FILE, csv_buffer.getvalue(), "Create user data file")
     except Exception as e:
         st.error(f"Fehler beim Speichern der Benutzerdaten: {e}")
 
-# Funktionen zum Initialisieren, Laden und Speichern der Datenbank
 def init_db():
     try:
         github.read_text(DB_FILE + ".csv")
     except github.NotFound:
-        # Datei existiert nicht, initialisieren Sie eine neue Datenbank
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS results (
-                    username TEXT,
-                    sample_number TEXT,
-                    count_session INTEGER,
-                    date TEXT,
-                    counts TEXT,
-                    FOREIGN KEY(username) REFERENCES users(username)
-                  )''')
-        conn.commit()
-        conn.close()
-        export_db_to_csv()
+        # Datei existiert nicht, initialisieren Sie eine neue CSV-Datei
+        df = pd.DataFrame(columns=['username', 'sample_number', 'count_session', 'date', 'counts'])
+        save_db(df)
     except Exception as e:
         st.error(f"Fehler beim Initialisieren der Datenbank: {e}")
 
 def load_db():
-    import_csv_to_db()
+    try:
+        csv_content = github.read_text(DB_FILE + ".csv")
+        df = pd.read_csv(io.StringIO(csv_content))
+    except github.NotFound:
+        df = pd.DataFrame(columns=['username', 'sample_number', 'count_session', 'date', 'counts'])
+    except Exception as e:
+        st.error(f"Fehler beim Laden der Datenbank: {e}")
+        df = pd.DataFrame(columns=['username', 'sample_number', 'count_session', 'date', 'counts'])
+    return df
 
-def save_db():
-    export_db_to_csv()
+def save_db(data):
+    csv_buffer = io.StringIO()
+    data.to_csv(csv_buffer, index=False)
+    try:
+        github.write_text(DB_FILE + ".csv", csv_buffer.getvalue(), "Update database file")
+    except Exception as e:
+        st.error(f"Fehler beim Speichern der Datenbank: {e}")
 
 def export_db_to_csv():
     conn = sqlite3.connect(DB_FILE)
@@ -136,7 +138,7 @@ def import_csv_to_db():
 
 # Initialisieren der Datenbank und Benutzerdaten
 init_user_data()
-load_db()
+db_df = load_db()
 
 # Passwort verschlüsseln
 def encrypt_password(password):
@@ -165,23 +167,30 @@ def register_user(username, password):
     save_user_data(users)
     return True
 
-# Benutzerergebnisse speichern
-def save_user_results(username, sample_number, count_session, date_time, current_counts):
+def delete_user(username):
+    users = load_user_data()
+    users = users[users['username'] != username]
+    save_user_data(users)
+
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    counts_str = ','.join(f'{key}:{value}' for key, value in current_counts.items())
-    c.execute('''INSERT INTO results (username, sample_number, count_session, date, counts)
-                 VALUES (?, ?, ?, ?, ?)''', (username, sample_number, count_session, date_time, counts_str))
+    c.execute('DELETE FROM results WHERE username = ?', (username,))
     conn.commit()
     conn.close()
+    save_db()  # Speichern Sie die aktualisierte Datenbank zurück zu GitHub
+
+def save_user_results(username, sample_number, count_session, date_time, current_counts):
+    counts_str = ','.join(f'{key}:{value}' for key, value in current_counts.items())
+    new_entry = pd.DataFrame([[username, sample_number, count_session, date_time, counts_str]], 
+                             columns=['username', 'sample_number', 'count_session', 'date', 'counts'])
+    db_df = load_db()
+    db_df = pd.concat([db_df, new_entry], ignore_index=True)
+    save_db(db_df)  # Speichern Sie die Datenbank zurück zu GitHub
 
 # Benutzerergebnisse abrufen
 def get_user_results(username):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('SELECT sample_number, count_session, date, counts FROM results WHERE username=?', (username,))
-    results = c.fetchall()
-    conn.close()
+    db_df = load_db()
+    results = db_df[db_df['username'] == username]
     return results
 
 # Funktion zum Herunterladen von Daten als Excel
@@ -373,21 +382,21 @@ else:
 
     # Funktion zum Anzeigen der gespeicherten Ergebnisse
     def display_results(results):
-        if not results:
+        if results.empty:  # Korrektur hier, Verwendung von .empty
             st.write("Keine gespeicherten Ergebnisse.")
             return
 
-        if isinstance(results[0], dict):  # Gast-Ergebnisse
+        if isinstance(results.iloc[0], dict):  # Prüfung für Gast-Ergebnisse
             sample_numbers = list(set(result['sample_number'] for result in results))
             selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
-        else:  # Registrierte Benutzer-Ergebnisse
-            sample_numbers = list(set(result[0] for result in results))
+        else:  # Prüfung für registrierte Benutzer-Ergebnisse
+            sample_numbers = list(set(results['sample_number']))
             selected_sample = st.selectbox("Probenummer auswählen", sample_numbers)
 
         if selected_sample:
             data = {name: [0, 0, 0] for name in button_names}  # Mit Nullen initialisieren
 
-            if isinstance(results[0], dict):  # Gast-Ergebnisse
+            if isinstance(results.iloc[0], dict):  # Gast-Ergebnisse
                 for result in results:
                     if result['sample_number'] == selected_sample:
                         sample_number = result['sample_number']
@@ -402,12 +411,12 @@ else:
                             for name in button_names:
                                 data[name][1] = counts.get(name, 0)
             else:  # Registrierte Benutzer-Ergebnisse
-                for result in results:
-                    if result[0] == selected_sample:
-                        sample_number = result[0]
-                        count_session = result[1]
-                        date = result[2]
-                        counts_str = result[3]
+                for _, result in results.iterrows():
+                    if result['sample_number'] == selected_sample:
+                        sample_number = result['sample_number']
+                        count_session = result['count_session']
+                        date = result['date']
+                        counts_str = result['counts']
                         counts = dict(item.split(":") for item in counts_str.split(","))
                         counts = {key: int(value) for key, value in counts.items()}
 
@@ -427,6 +436,7 @@ else:
 
             excel_data = to_excel(counts_df)
             st.download_button(label='Excel runterladen', data=excel_data, file_name=f'{selected_sample}.xlsx', key=f'download_{selected_sample}')
+
 
     # Anzeige der verschiedenen Ansichten basierend auf der Benutzerwahl
     if view == "Einführung":
@@ -589,9 +599,11 @@ else:
             st.warning("Archivierte Daten im Gästelogin können verlorengehen.")
             display_results(st.session_state.get('guest_results', []))
         else:
-            display_results(st.session_state.get('results', []))
-            
-    # Ansicht "Account"
+            st.session_state['results'] = get_user_results(st.session_state['username'])
+            display_results(st.session_state['results'])
+
+                
+    # Account-Verwaltung
     elif view == "Account":
         st.header("Account-Verwaltung")
         if st.session_state['guest']:
@@ -659,7 +671,6 @@ else:
                             st.session_state['change_username'] = False
                             time.sleep(4)
                             st.rerun()
-
                         else:
                             st.error("Benutzername existiert bereits.")
                     else:
@@ -672,9 +683,7 @@ else:
             if 'delete_account' in st.session_state and st.session_state['delete_account']:
                 st.warning("Achtung: Alle archivierten Daten gehen verloren.")
                 if st.button("Account löschen: bestätigen", key="confirm_delete_account"):
-                    users = load_user_data()
-                    users = users[users['username'] != st.session_state['username']]
-                    save_user_data(users)
+                    delete_user(st.session_state['username'])
                     st.success("Account erfolgreich gelöscht. Du wirst automatisch zum Login weitergeleitet.")
                     st.session_state['authenticated'] = False
                     st.session_state['delete_account'] = False
@@ -682,3 +691,4 @@ else:
                     st.rerun()
                 if st.button("Abbrechen", key="cancel_delete_account"):
                     st.session_state['delete_account'] = False
+                    st.rerun()
