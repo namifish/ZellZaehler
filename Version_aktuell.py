@@ -346,7 +346,7 @@ else:
         **Funktionen:**
         - **Probenummer eingeben**: Gib eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
         - **Zählen**: Führe die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
-        - **Neuen Zelltyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
+        - **Neuen Zellentyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
         - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände. Bitte achte darauf, dass durch die Korrektur nicht mehr als 100 Zellen insgesamt gezählt werden. Im Notfall kannst du den letzten Schritt rückgängig machen.
         - **Rückgängig**: Macht den letzten Zählungsschritt rückgängig.
         - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
@@ -380,9 +380,9 @@ else:
                     st.session_state['edit_mode'] = not st.session_state['edit_mode']
                     st.rerun()
 
-            # Button für die Definition eines neuen Zelltyps: Ermöglicht die Umbenennung der unteren Zählerknöpfe
+            # Button für die Definition eines neuen Zellentyps: Ermöglicht die Umbenennung der unteren Zählerknöpfe
             with top_columns[2]:
-                if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle.", use_container_width=True):
+                if st.button('Neuen Zellentyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle.", use_container_width=True):
                     st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
                     st.rerun()
 
