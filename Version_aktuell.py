@@ -174,6 +174,7 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                         st.session_state['authenticated'] = True
                         st.session_state['username'] = username
                         st.session_state['results'] = get_user_results(username)
+                        st.rerun()
                     else:
                         st.error("Ungültiger Benutzername oder Passwort")
                 else:
@@ -182,12 +183,14 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
         with login_columns[2]:
             if st.button("Registrieren",use_container_width=True):
                 st.session_state['register'] = True
+                st.rerun()
 
         with login_columns[3]:
             if st.button("Weiter als Gast",use_container_width=True):
                 st.session_state['guest'] = True
                 if 'guest_results' not in st.session_state:
                     st.session_state['guest_results'] = []
+                    st.rerun()
 else:
     st.sidebar.header("Navigation")
     view = st.sidebar.radio("Ansicht wählen", ["Einführung", "Zählen", "Archiv", "Account"])
@@ -315,7 +318,7 @@ else:
             st.dataframe(counts_df, hide_index=True)
 
             excel_data = to_excel(counts_df)
-            st.download_button(label='Download Excel', data=excel_data, file_name=f'{selected_sample}.xlsx', key=f'download_{selected_sample}')
+            st.download_button(label='Excel runterladen', data=excel_data, file_name=f'{selected_sample}.xlsx', key=f'download_{selected_sample}')
 
 
     if view == "Einführung":
@@ -459,7 +462,7 @@ else:
 
             with bottom_columns[2]:
                 if st.session_state['count_session'] == 1:
-                    if st.button("Speichern & weiter zu 2. Zählung", use_container_width=True):
+                    if st.button("Speichern & weiter zur 2. Zählung", use_container_width=True):
                         if total_count == 100:
                             save_results()
                             reset_counts()
