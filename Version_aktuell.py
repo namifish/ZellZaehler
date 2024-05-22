@@ -120,6 +120,20 @@ def to_excel(df):
 init_db()
 init_user_data()
 
+# Funktion zum Anzeigen des Inhalts der Datei
+def display_file_contents(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            contents = file.read()
+            st.text("Inhalt der Datei:")
+            st.text(contents)
+    except Exception as e:
+        st.write(f"Fehler beim Lesen der Datei: {e}")
+
+# Zeige den Inhalt der Datei an
+display_file_contents(LOGIN_FILE)
+
+
 # Streamlit-Anwendung
 st.title("ZellZähler")
 
