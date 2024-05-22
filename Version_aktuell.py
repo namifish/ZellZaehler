@@ -213,6 +213,7 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
         with login_columns[3]:
             if st.button("Weiter als Gast",use_container_width=True):
                 st.session_state['guest'] = True
+                st.rerun()
                 if 'guest_results' not in st.session_state:
                     st.session_state['guest_results'] = []
                     st.rerun()
@@ -519,7 +520,7 @@ else:
     elif view == "Account":
         st.header("Account-Verwaltung")
         if st.session_state['guest']:
-            st.warning("Nicht eingeloggt. Bitte melde dich an. Achtung, die archivierten Daten aus dem Gästelogin gehen verloren.")
+            st.warning("Nicht angemeldet. Achtung, die archivierten Daten aus dem Gästelogin können verlorengehen.")
             if st.button("Zurück zum Login", key="guest_back_to_login"):
                 st.session_state['authenticated'] = False
                 st.session_state['guest'] = False
