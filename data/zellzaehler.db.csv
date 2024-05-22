@@ -1,4 +1,1 @@
 username,sample_number,count_session,date,counts
-Fisch,123,1,2024-05-22 16:05:12,"Pro   :0,Mye   :100,Meta   :0,Stab   :0,Seg   :0,Eos   :0,Baso   :0,Mono   :0,Ly   :0,Div1   :0,Div2   :0,Div3   :0"
-Fisch,123,2,2024-05-22 16:05:26,"Pro   :100,Mye   :0,Meta   :0,Stab   :0,Seg   :0,Eos   :0,Baso   :0,Mono   :0,Ly   :0,Div1   :0,Div2   :0,Div3   :0"
-Test,123,1,2024-05-22 16:55:56,"Pro   :100,Mye   :0,Meta   :0,Stab   :0,Seg   :0,Eos   :0,Baso   :0,Mono   :0,Ly   :0,Div1   :0,Div2   :0,Div3   :0"
