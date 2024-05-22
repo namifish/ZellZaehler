@@ -30,7 +30,7 @@ def set_background(png_file):
     st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # Hintergrund festlegen (transparente Version)
-set_background('hintergrundtransparent.png')
+set_background('images/hintergrundtransparent.png')
 
 # SQLite-Datenbank initialisieren
 def init_db():
@@ -357,7 +357,7 @@ else:
     if view == "Einführung":
         if st.session_state['guest']:
         # Hintergrund für die Einführung
-            set_background('hintergrund.png')
+            set_background('images/hintergrund.png')
             st.header("Einführung")
             st.write("""
             Willkommen bei der ZellZähler-App!
@@ -376,7 +376,7 @@ else:
             """)
         else:
             # Hintergrund für die Einführung
-            set_background('hintergrund.png')
+            set_background('images/hintergrund.png')
             st.header("Einführung")
             st.write(f"""
             Willkommen bei der ZellZähler-App, {st.session_state['username']}!
