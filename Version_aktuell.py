@@ -162,6 +162,7 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
         with register_columns[2]:
             if st.button("Zurück zum Login", use_container_width=True):
                 st.session_state['register'] = False
+                st.rerun()
     else:
         st.subheader("Login")
         username = st.text_input("Benutzername")
