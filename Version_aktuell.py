@@ -11,27 +11,6 @@ import base64
 LOGIN_FILE = st.secrets["data"]["LOGIN_FILE"]
 DB_FILE = st.secrets["data"]["DB_FILE"]
 
-# Sicherstellen, dass das Verzeichnis existiert
-if not os.path.exists(os.path.dirname(LOGIN_FILE)):
-    try:
-        os.makedirs(os.path.dirname(LOGIN_FILE))
-        st.write(f"Verzeichnis {os.path.dirname(LOGIN_FILE)} erfolgreich erstellt.")
-    except Exception as e:
-        st.write(f"Fehler beim Erstellen des Verzeichnisses: {e}")
-
-# Optional: Überprüfe, ob die Datei existiert und beschreibbar ist
-def check_file_permissions(file_path):
-    if os.path.exists(file_path):
-        st.write(f"Die Datei {file_path} existiert.")
-        if os.access(file_path, os.W_OK):
-            st.write(f"Die Datei {file_path} ist beschreibbar.")
-        else:
-            st.write(f"Die Datei {file_path} ist nicht beschreibbar.")
-    else:
-        st.write(f"Die Datei {file_path} existiert nicht.")
-
-check_file_permissions(LOGIN_FILE)
-
 st.set_page_config(page_title="ZellZähler", page_icon="🔬")
 
 # Funktion, um das Hintergrundbild festzulegen
@@ -67,15 +46,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Sicherstellen, dass die Datei existiert und initialisiert werden kann
+# Benutzerdaten initialisieren
 def init_user_data():
     if not os.path.exists(LOGIN_FILE):
         df = pd.DataFrame(columns=['username', 'password'])
-        try:
-            df.to_csv(LOGIN_FILE, index=False)
-            st.write(f"Benutzerdaten erfolgreich initialisiert in {LOGIN_FILE}.")
-        except Exception as e:
-            st.write(f"Fehler beim Initialisieren der Benutzerdaten: {e}")
+        df.to_csv(LOGIN_FILE, index=False)
 
 # Benutzerdaten laden
 def load_user_data():
@@ -141,14 +116,12 @@ def to_excel(df):
     processed_data = output.getvalue()
     return processed_data
 
-# Initialisieren und Testen
+# Datenbank und Benutzerdaten initialisieren
 init_db()
 init_user_data()
-test_write_to_file()
 
 # Streamlit-Anwendung
 st.title("ZellZähler")
-
 
 button_names = [
     "Pro   ", "Mye   ", "Meta   ", "Stab   ", "Seg   ", "Eos   ",
