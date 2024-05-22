@@ -401,7 +401,7 @@ else:
         
         # Warnung, wenn keine Probenummer eingegeben wurde
         if not st.session_state['sample_number']:
-            st.warning("Bitte geben eine Probenummer ein, um zu beginnen.")
+            st.warning("Bitte gebe eine Probenummer ein, um zu beginnen.")
         else:
             # Anzeige der aktuellen Zählungssession
             st.subheader(f"Aktuelle Zählungssession: {st.session_state['count_session']}")
