@@ -166,6 +166,18 @@ def register_user(username, password):
     save_user_data(users)
     return True
 
+def delete_user(username):
+    users = load_user_data()
+    users = users[users['username'] != username]
+    save_user_data(users)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('DELETE FROM results WHERE username = ?', (username,))
+    conn.commit()
+    conn.close()
+    save_db()  # Speichern Sie die aktualisierte Datenbank zurück zu GitHub
+
 # Benutzerergebnisse speichern
 def save_user_results(username, sample_number, count_session, date_time, current_counts):
     conn = sqlite3.connect(DB_FILE)
@@ -592,7 +604,7 @@ else:
         else:
             display_results(st.session_state.get('results', []))
             
-    # Ansicht "Account"
+    # Account-Verwaltung
     elif view == "Account":
         st.header("Account-Verwaltung")
         if st.session_state['guest']:
@@ -660,7 +672,6 @@ else:
                             st.session_state['change_username'] = False
                             time.sleep(4)
                             st.rerun()
-
                         else:
                             st.error("Benutzername existiert bereits.")
                     else:
@@ -673,9 +684,7 @@ else:
             if 'delete_account' in st.session_state and st.session_state['delete_account']:
                 st.warning("Achtung: Alle archivierten Daten gehen verloren.")
                 if st.button("Account löschen: bestätigen", key="confirm_delete_account"):
-                    users = load_user_data()
-                    users = users[users['username'] != st.session_state['username']]
-                    save_user_data(users)
+                    delete_user(st.session_state['username'])
                     st.success("Account erfolgreich gelöscht. Du wirst automatisch zum Login weitergeleitet.")
                     st.session_state['authenticated'] = False
                     st.session_state['delete_account'] = False
@@ -683,3 +692,4 @@ else:
                     st.rerun()
                 if st.button("Abbrechen", key="cancel_delete_account"):
                     st.session_state['delete_account'] = False
+                    st.rerun()
