@@ -24,8 +24,8 @@ def set_background(png_file):
     """
     st.markdown(page_bg_img, unsafe_allow_html=True)
 
-# Hintergrund festlegen (transparente Version)
-set_background('hintergrundtransparent.png')
+# Hintergrund festlegen
+set_background('hintergrund.png')
 
 # Konfiguration
 LOGIN_FILE = 'login_hashed_password_list.csv'
@@ -137,9 +137,7 @@ if 'register' not in st.session_state:
 if 'guest' not in st.session_state:
     st.session_state['guest'] = False
 
-# Prüfen, ob der Benutzer authentifiziert ist oder als Gast angemeldet ist
 if not st.session_state['authenticated'] and not st.session_state['guest']:
-    # Wenn der Benutzer sich registrieren möchte
     if st.session_state['register']:
         st.subheader("Registrieren")
         reg_username = st.text_input("Wähle einen Benutzernamen")
@@ -149,7 +147,6 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
 
         with register_columns[1]:
             if st.button("Registrieren", use_container_width=True):
-                # Überprüfen, ob alle Felder ausgefüllt sind und die Passwörter übereinstimmen
                 if reg_username and reg_password and reg_confirm_password:
                     if reg_password == reg_confirm_password:
                         if register_user(reg_username, reg_password):
@@ -166,16 +163,13 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
             if st.button("Zurück zum Login", use_container_width=True):
                 st.session_state['register'] = False
                 st.rerun()
-    # Wenn der Benutzer sich einloggen möchte
     else:
         st.subheader("Login")
         username = st.text_input("Benutzername")
         password = st.text_input("Passwort", type="password")
         login_columns = st.columns((0.5,3,3,3,0.5))
-
         with login_columns[1]:
             if st.button("Login",use_container_width=True):
-                # Überprüfen, ob Benutzername und Passwort ausgefüllt sind
                 if username and password:
                     if verify_user(username, password):
                         st.session_state['authenticated'] = True
@@ -198,12 +192,10 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                 if 'guest_results' not in st.session_state:
                     st.session_state['guest_results'] = []
                     st.rerun()
-# Wenn der Benutzer authentifiziert ist oder als Gast angemeldet ist
 else:
     st.sidebar.header("Navigation")
     view = st.sidebar.radio("Ansicht wählen", ["Einführung", "Zählen", "Archiv", "Account"])
 
-    # Initialisieren der Sitzungszustände
     if 'history' not in st.session_state:
         st.session_state['history'] = []
 
@@ -226,7 +218,6 @@ else:
     if 'name_edit_mode' not in st.session_state:
         st.session_state['name_edit_mode'] = False
 
-    # Funktion zum Erhöhen des Zählerwerts eines Knopfes
     def increment_button_count(name):
         total_count = sum(st.session_state[f'count_{name}'] for name in button_names)
         if total_count >= 100:
@@ -235,12 +226,10 @@ else:
             st.session_state[f'count_{name}'] += 1
             st.rerun()
 
-    # Funktion zum Speichern des aktuellen Zustands
     def save_state():
         current_counts = {name: st.session_state[f'count_{name}'] for name in button_names}
         st.session_state['history'].append(current_counts)
 
-    # Funktion zum Rückgängigmachen des letzten Schrittes
     def undo_last_step():
         if st.session_state['history']:
             last_state = st.session_state['history'].pop()
@@ -248,13 +237,11 @@ else:
                 st.session_state[f'count_{name}'] = last_state[name]
             st.rerun()
 
-    # Funktion zum Zurücksetzen der Zählerstände
     def reset_counts():
         for name in button_names:
             st.session_state[f'count_{name}'] = 0
         st.rerun()
 
-    # Funktion zum Speichern der Zählergebnisse
     def save_results():
         sample_number = st.session_state['sample_number']
         count_session = st.session_state['count_session']
@@ -278,7 +265,6 @@ else:
             st.session_state['count_session'] += 1
         reset_counts()
 
-    # Funktion zum Anzeigen der gespeicherten Ergebnisse
     def display_results(results):
         if not results:
             st.write("Keine gespeicherten Ergebnisse.")
@@ -335,10 +321,8 @@ else:
             excel_data = to_excel(counts_df)
             st.download_button(label='Excel runterladen', data=excel_data, file_name=f'{selected_sample}.xlsx', key=f'download_{selected_sample}')
 
-    # Anzeige der verschiedenen Ansichten basierend auf der Benutzerwahl
+
     if view == "Einführung":
-        # Hintergrund für die Einführung
-        set_background('hintergrund.png')
         st.header("Einführung")
         st.write("""
         Willkommen bei der ZellZähler-App!
@@ -356,35 +340,37 @@ else:
         Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
         """)
 
-    # Ansicht "Zählen"
     elif view == "Zählen":
         st.session_state['sample_number'] = st.text_input("Probenummer eingeben", value=st.session_state['sample_number'])
         
-        # Warnung, wenn keine Probenummer eingegeben wurde
         if not st.session_state['sample_number']:
             st.warning("Bitte geben Sie eine Probenummer ein, um zu beginnen.")
         else:
-            # Anzeige der aktuellen Zählungssession
             st.subheader(f"Aktuelle Zählungssession: {st.session_state['count_session']}")
 
             top_columns = st.columns((2, 2, 3))
 
-            # Rückgängig-Button: Macht den letzten Zählschritt rückgängig
             with top_columns[0]:
                 if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig.", use_container_width=True):
                     undo_last_step()
                     st.rerun()
-            # Korrigieren-Button: Ermöglicht die manuelle Korrektur der Zählerstände
             with top_columns[1]:
                 if st.button('Korrigieren', help="Manuelle Korrektur der Zählerstände. Mit zweitem Klick den Korrekturmodus beenden.", use_container_width=True):
                     st.session_state['edit_mode'] = not st.session_state['edit_mode']
                     st.rerun()
 
-            # Button für die Definition eines neuen Zelltyps: Ermöglicht die Umbenennung der unteren Zählerknöpfe
             with top_columns[2]:
                 if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle.", use_container_width=True):
                     st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
                     st.rerun()
+            
+            #if st.button('Korrigieren', help="Manuelle Korrektur der Zählerstände. Mit zweiten Klick den Korrekturmodus beenden."):
+                #st.session_state['edit_mode'] = not st.session_state['edit_mode']
+                #st.rerun()
+
+            #if st.button('Neuen Zelltyp definieren', help="Individuelle Umbenennung der unteren drei Zählerknöpfe. Die neue Benennung erscheint nicht auf der Tabelle."):
+                #st.session_state['name_edit_mode'] = not st.session_state['name_edit_mode']
+                #st.rerun()
 
             total_count = sum(st.session_state[f'count_{name}'] for name in button_names)
             st.header(f"{total_count}/100")
@@ -403,7 +389,9 @@ else:
             if total_count > 100:
                 st.error("Die Gesamtzahl darf 100 nicht überschreiten. Bitte mache den letzten Schritt rückgängig oder korrigiere den Zählerstand.")
 
+            
             # Anpassen des Layouts mit spezifischen Spaltenbreiten
+
             rows = [st.columns((1.5, 1.5, 1.5)) for _ in range(4)]  # 3x4 Grid für Buttons
             button_pressed = None
 
@@ -427,6 +415,27 @@ else:
                         else:
                             st.error("Die Gesamtzahl darf 100 nicht überschreiten.")
 
+            #cols_per_row = 3
+            #rows = [st.columns(cols_per_row) for _ in range(len(button_names) // cols_per_row + 1)]
+            #button_pressed = None
+
+            #for name in button_names:
+                #index = button_names.index(name)
+                #row_index, col_index = divmod(index, cols_per_row)
+                #col = rows[row_index][col_index]
+                #with col:
+                    #display_name = name
+                    #if name in ["Div1", "Div2", "Div3"]:
+                        #display_name = st.session_state['custom_names'][int(name[-1]) - 1]
+                    #button_label = f"{display_name}\n({st.session_state[f'count_{name}']})"
+                    #if st.button(button_label, key=f'button_{name}'):
+                        #if not st.session_state['edit_mode'] and not st.session_state['name_edit_mode']:
+                            #save_state()
+                            #button_pressed = name
+                    #if st.session_state['edit_mode']:
+                        #new_count = st.number_input("Zähler korrigieren", value=st.session_state[f'count_{name}'], key=f'edit_{name}')
+                        #st.session_state[f'count_{name}'] = new_count
+
             if st.session_state['name_edit_mode']:
                 for i in range(3):
                     new_name = st.text_input(f"Neuer Name für {button_names[9+i]}", value=st.session_state['custom_names'][i], key=f'custom_name_{i}')
@@ -444,6 +453,7 @@ else:
 
             st.markdown("<br>", unsafe_allow_html=True)
         
+
             bottom_columns = st.columns((2, 2, 2))
 
             with bottom_columns[0]:
@@ -470,7 +480,32 @@ else:
                         else:
                             st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigiere die Zählerstände.")
 
-    # Ansicht "Archiv"
+            #if st.button('Rückgängig', key='undo_button', help="Macht den letzen Schritt rückgängig."):
+                #undo_last_step()
+                #st.rerun()
+
+            #if st.button('Zählung zurücksetzen', help="Setzt alle Zählerstände wieder auf null"):
+                #reset_counts()
+                #st.rerun()
+
+            #if st.session_state['count_session'] == 1:
+                #if st.button("Speichern & weiter zu 2. Zählung"):
+                    #if total_count == 100:
+                        #save_results()
+                        #reset_counts()
+                        #st.session_state['count_session'] = 2
+                    #else:
+                        #st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
+
+            #if st.session_state['count_session'] ==2:
+                #if st.button("Zählung beenden & archivieren", help="Die gespeicherten Ergebnisse sind im Archiv sichtbar."):
+                    #if total_count == 100:
+                        #save_results()
+                        #reset_counts()
+                        #st.session_state['count_session'] = 1
+                    #else:
+                        #st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigieren Sie die Zählerstände.")
+
     elif view == "Archiv":
         st.header("Archivierte Ergebnisse")
         if st.session_state['guest']:
@@ -478,7 +513,6 @@ else:
         else:
             display_results(st.session_state.get('results', []))
             
-    # Ansicht "Account"
     elif view == "Account":
         st.header("Account-Verwaltung")
         if st.button("Passwort ändern"):
@@ -486,7 +520,6 @@ else:
         if st.button("Account löschen"):
             st.session_state['delete_account'] = True
 
-        # Passwort ändern
         if 'change_password' in st.session_state and st.session_state['change_password']:
             new_password = st.text_input("Neues Passwort", type="password")
             confirm_password = st.text_input("Passwort bestätigen", type="password")
@@ -505,7 +538,6 @@ else:
             if st.button("Abbrechen"):
                 st.session_state['change_password'] = False
 
-        # Account löschen
         if 'delete_account' in st.session_state and st.session_state['delete_account']:
             if st.button("Bestätigen"):
                 users = load_user_data()
