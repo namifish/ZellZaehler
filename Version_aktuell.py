@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-import json
 import bcrypt
 from datetime import datetime
 import sqlite3
