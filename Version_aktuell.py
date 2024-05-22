@@ -6,6 +6,7 @@ from datetime import datetime
 import sqlite3
 import io
 import base64
+import time
 
 # Verwende secrets für die Dateipfade
 LOGIN_FILE = st.secrets["data"]["LOGIN_FILE"]
@@ -170,6 +171,8 @@ if not st.session_state['authenticated'] and not st.session_state['guest']:
                         if register_user(reg_username, reg_password):
                             st.success("Registrierung erfolgreich. Du kannst dich jetzt einloggen.")
                             st.session_state['register'] = False
+                            time.sleep(2)
+                            st.rerun()
                         else:
                             st.error("Benutzername existiert bereits. Bitte wähle einen anderen Benutzernamen.")
                     else:
@@ -352,24 +355,44 @@ else:
 
     # Anzeige der verschiedenen Ansichten basierend auf der Benutzerwahl
     if view == "Einführung":
+        if st.session_state['guest']:
         # Hintergrund für die Einführung
-        set_background('hintergrund.png')
-        st.header("Einführung")
-        st.write("""
-        Willkommen bei der ZellZähler-App!
-        
-        **Funktionen:**
-        - **Probenummer eingeben**: Gib eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
-        - **Zählen**: Führe die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
-        - **Neuen Zellentyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
-        - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände. Bitte achte darauf, dass durch die Korrektur nicht mehr als 100 Zellen insgesamt gezählt werden. Im Notfall kannst du den letzten Schritt rückgängig machen.
-        - **Rückgängig**: Macht den letzten Zählungsschritt rückgängig.
-        - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
-        - **Ergebnisse speichern**: Speichert die aktuellen Zählungsergebnisse.
-        - **Archiv**: Zeigt alle gespeicherten Zählungsergebnisse an, die nach Probenummern durchsucht werden können.
+            set_background('hintergrund.png')
+            st.header("Einführung")
+            st.write("""
+            Willkommen bei der ZellZähler-App!
+            
+            **Funktionen:**
+            - **Probenummer eingeben**: Gib eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
+            - **Zählen**: Führe die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
+            - **Neuen Zellentyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
+            - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände.
+            - **Rückgängig**: Macht den letzten Schritt rückgängig.
+            - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
+            - **Ergebnisse speichern**: Nach jeder Session die aktuellen Zählungsergebnisse speichern und archivieren.
+            - **Archiv**: Zeigt alle gespeicherten Zählungsergebnisse an, die nach Probenummern durchsucht werden können.
 
-        Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
-        """)
+            Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
+            """)
+        else:
+            # Hintergrund für die Einführung
+            set_background('hintergrund.png')
+            st.header("Einführung")
+            st.write(f"""
+            Willkommen bei der ZellZähler-App, {st.session_state['username']}!
+
+            **Funktionen:**
+            - **Probenummer eingeben**: Gib eine eindeutige Probenummer ein, um eine neue Zählung zu starten.
+            - **Zählen**: Führe die Zählungen durch, indem du die entsprechenden Knöpfe drückst.
+            - **Neuen Zellentyp definieren**: Klicke auf diesen Knopf, um die unteren drei Knöpfe umzubenennen.
+            - **Korrigieren**: Ermöglicht das manuelle Korrigieren der Zählerstände.
+            - **Rückgängig**: Macht den letzten Schritt rückgängig.
+            - **Zählung zurücksetzen**: Setzt alle Zählerstände auf Null zurück.
+            - **Ergebnisse speichern**: Nach jeder Session die aktuellen Zählungsergebnisse speichern und archivieren.
+            - **Archiv**: Zeigt alle gespeicherten Zählungsergebnisse an, die nach Probenummern durchsucht werden können.
+
+            Diese App wurde für das Hämatologie Praktikum an der ZHAW erschaffen. Sie hilft beim Differenzieren des weissen Blutbildes. Entwickelt von Sarah 'Viki' Ramos Zähnler und Lucia Schweizer. Die Illustration ist von Sarah 'Viki' Ramos Zähnler.
+            """)
 
     # Ansicht "Zählen"
     elif view == "Zählen":
@@ -474,7 +497,7 @@ else:
                             reset_counts()
                             st.session_state['count_session'] = 2
                         else:
-                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigiere die Zählerstände.")
+                            st.error("Die Gesamtzahl der Zellen muss 100 betragen.")
 
                 if st.session_state['count_session'] == 2:
                     if st.button("Zählung beenden & archivieren", help="Die gespeicherten Ergebnisse sind im Archiv sichtbar.", use_container_width=True):
@@ -483,8 +506,7 @@ else:
                             reset_counts()
                             st.session_state['count_session'] = 1
                         else:
-                            st.error("Die Gesamtzahl der Zellen muss 100 sein. Bitte korrigiere die Zählerstände.")
-
+                            st.error("Die Gesamtzahl der Zellen muss 100 betragen.")
     # Ansicht "Archiv"
     elif view == "Archiv":
         st.header("Archivierte Ergebnisse")
@@ -496,38 +518,91 @@ else:
     # Ansicht "Account"
     elif view == "Account":
         st.header("Account-Verwaltung")
-        if st.button("Passwort ändern"):
-            st.session_state['change_password'] = True
-        if st.button("Account löschen"):
-            st.session_state['delete_account'] = True
-
-        # Passwort ändern
-        if 'change_password' in st.session_state and st.session_state['change_password']:
-            new_password = st.text_input("Neues Passwort", type="password")
-            confirm_password = st.text_input("Passwort bestätigen", type="password")
-            if st.button("Passwort ändern"):
-                if new_password and confirm_password:
-                    if new_password == confirm_password:
-                        users = load_user_data()
-                        users[st.session_state['username']]['password'] = encrypt_password(new_password)
-                        save_user_data(users)
-                        st.success("Passwort erfolgreich geändert.")
-                        st.session_state['change_password'] = False
-                    else:
-                        st.error("Passwörter stimmen nicht überein.")
-                else:
-                    st.error("Bitte fülle alle Felder aus.")
-            if st.button("Abbrechen"):
-                st.session_state['change_password'] = False
-
-        # Account löschen
-        if 'delete_account' in st.session_state and st.session_state['delete_account']:
-            if st.button("Bestätigen"):
-                users = load_user_data()
-                del users[st.session_state['username']]
-                save_user_data(users)
-                st.success("Account erfolgreich gelöscht.")
+        if st.session_state['guest']:
+            st.warning("Nicht eingeloggt. Bitte melde dich an. Achtung, die archivierten Daten aus dem Gästelogin gehen verloren.")
+            if st.button("Zurück zum Login", key="guest_back_to_login"):
                 st.session_state['authenticated'] = False
-                st.session_state['delete_account'] = False
-            if st.button("Abbrechen"):
-                st.session_state['delete_account'] = False
+                st.session_state['guest'] = False
+                st.session_state['register'] = False
+                st.rerun()
+        else:
+            st.write(f"**Eingeloggter User:** {st.session_state['username']}")
+
+            grid_columns = st.columns((2,2,1))
+
+            with grid_columns[0]:
+                if st.button("Passwort ändern", key="change_password_button", use_container_width=True):
+                    st.session_state['change_password'] = True
+                if st.button("Benutzernamen ändern", key="change_username_button", use_container_width=True):
+                    st.session_state['change_username'] = True
+
+            with grid_columns[1]:
+                if st.button("Account löschen", key="delete_account_button", use_container_width=True):
+                    st.session_state['delete_account'] = True
+                if st.button("Abmelden", key="logout_button", use_container_width=True):
+                    st.success(f"Auf Wiedersehen, {st.session_state['username']}!")
+                    st.session_state['authenticated'] = False
+                    st.session_state['guest'] = False
+                    st.session_state['register'] = False
+                    time.sleep(2)
+                    st.rerun()
+
+            # Passwort ändern
+            if 'change_password' in st.session_state and st.session_state['change_password']:
+                new_password = st.text_input("Neues Passwort", type="password", key="new_password")
+                confirm_password = st.text_input("Passwort bestätigen", type="password", key="confirm_password")
+                if st.button("Passwort ändern", key="confirm_change_password"):
+                    if new_password and confirm_password:
+                        if new_password == confirm_password:
+                            users = load_user_data()
+                            users.loc[users['username'] == st.session_state['username'], 'password'] = encrypt_password(new_password)
+                            save_user_data(users)
+                            st.success("Passwort erfolgreich geändert.")
+                            st.session_state['change_password'] = False
+                            time.sleep(4)
+                            st.rerun()
+                        else:
+                            st.error("Passwörter stimmen nicht überein.")
+                    else:
+                        st.error("Bitte fülle alle Felder aus.")
+                if st.button("Abbrechen", key="cancel_change_password"):
+                    st.session_state['change_password'] = False
+                    st.rerun()
+
+            # Benutzername ändern
+            if 'change_username' in st.session_state and st.session_state['change_username']:
+                new_username = st.text_input("Neuer Benutzername", key="new_username")
+                if st.button("Benutzernamen ändern", key="confirm_change_username"):
+                    if new_username:
+                        users = load_user_data()
+                        if new_username not in users['username'].values:
+                            users.loc[users['username'] == st.session_state['username'], 'username'] = new_username
+                            save_user_data(users)
+                            st.session_state['username'] = new_username
+                            st.success("Benutzername erfolgreich geändert.")
+                            st.session_state['change_username'] = False
+                            time.sleep(4)
+                            st.rerun()
+
+                        else:
+                            st.error("Benutzername existiert bereits.")
+                    else:
+                        st.error("Bitte gebe einen neuen Benutzernamen ein.")
+                if st.button("Abbrechen", key="cancel_change_username"):
+                    st.session_state['change_username'] = False
+                    st.rerun()
+
+            # Account löschen
+            if 'delete_account' in st.session_state and st.session_state['delete_account']:
+                st.error("Achtung: Alle deine Daten gehen verloren.")
+                if st.button("Account löschen: bestätigen", key="confirm_delete_account"):
+                    users = load_user_data()
+                    users = users[users['username'] != st.session_state['username']]
+                    save_user_data(users)
+                    st.success("Account erfolgreich gelöscht. Du wirst automatisch zum Login weitergeleitet.")
+                    st.session_state['authenticated'] = False
+                    st.session_state['delete_account'] = False
+                    time.sleep(4)
+                    st.rerun()
+                if st.button("Abbrechen", key="cancel_delete_account"):
+                    st.session_state['delete_account'] = False
