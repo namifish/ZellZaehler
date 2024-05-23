@@ -90,6 +90,20 @@ def register_user(username, password):
     save_user_data(users)
     return True
 
+# Benutzer und zugehörige Daten aus der Datenbank löschen
+def delete_user(username):
+    # Benutzer aus CSV entfernen
+    users = load_user_data()
+    users = users[users['username'] != username]
+    save_user_data(users)
+
+    # Benutzerdaten aus SQLite-Datenbank entfernen
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('DELETE FROM results WHERE username=?', (username,))
+    conn.commit()
+    conn.close()
+
 # Benutzerergebnisse speichern
 def save_user_results(username, sample_number, count_session, date_time, current_counts):
     conn = sqlite3.connect(DB_FILE)
@@ -597,9 +611,7 @@ else:
             if 'delete_account' in st.session_state and st.session_state['delete_account']:
                 st.warning("Achtung: Alle archivierten Daten gehen verloren.")
                 if st.button("Account löschen: bestätigen", key="confirm_delete_account"):
-                    users = load_user_data()
-                    users = users[users['username'] != st.session_state['username']]
-                    save_user_data(users)
+                    delete_user(st.session_state['username'])
                     st.success("Account erfolgreich gelöscht. Du wirst automatisch zum Login weitergeleitet.")
                     st.session_state['authenticated'] = False
                     st.session_state['delete_account'] = False
