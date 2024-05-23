@@ -62,7 +62,6 @@ def load_user_data():
 # Benutzerdaten speichern
 def save_user_data(data):
     data.to_csv(LOGIN_FILE, index=False)
-    backup_files()  # Sicherung nach dem Speichern erstellen
 
 # Passwort verschlüsseln
 def encrypt_password(password):
