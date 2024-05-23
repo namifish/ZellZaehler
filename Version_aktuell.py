@@ -7,31 +7,10 @@ import sqlite3
 import io
 import base64
 import time
-import shutil
 
 # Dateipfade
 LOGIN_FILE = 'login_hashed_password_list.csv'
 DB_FILE = 'zellzaehler.db'
-BACKUP_DIR = 'backup/'
-
-# Backup-Verzeichnis erstellen, wenn es nicht existiert
-if not os.path.exists(BACKUP_DIR):
-    os.makedirs(BACKUP_DIR)
-
-# Sicherung der Dateien erstellen
-def backup_files():
-    shutil.copy(LOGIN_FILE, BACKUP_DIR + LOGIN_FILE)
-    shutil.copy(DB_FILE, BACKUP_DIR + DB_FILE)
-
-# Sicherung der Dateien wiederherstellen
-def restore_files():
-    if os.path.exists(BACKUP_DIR + LOGIN_FILE):
-        shutil.copy(BACKUP_DIR + LOGIN_FILE, LOGIN_FILE)
-    if os.path.exists(BACKUP_DIR + DB_FILE):
-        shutil.copy(BACKUP_DIR + DB_FILE, DB_FILE)
-
-# Dateien wiederherstellen
-restore_files()
 
 st.set_page_config(page_title="ZellZähler", page_icon="🔬")
 
@@ -135,7 +114,6 @@ def save_user_results(username, sample_number, count_session, date_time, current
                  VALUES (?, ?, ?, ?, ?)''', (username, sample_number, count_session, date_time, counts_str))
     conn.commit()
     conn.close()
-    backup_files()  # Sicherung nach dem Speichern erstellen
 
 # Benutzerergebnisse abrufen
 def get_user_results(username):
@@ -157,6 +135,8 @@ def to_excel(df):
 # Datenbank und Benutzerdaten initialisieren
 init_db()
 init_user_data()
+
+#dies ist ein Code zum Überprüfen der Datenbank und ist für die App nicht weiter relevant:
 
 ## Funktion zum Anzeigen des Inhalts der Datei
 #def display_file_contents(file_path):
