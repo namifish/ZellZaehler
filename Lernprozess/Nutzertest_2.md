@@ -1,7 +1,7 @@
 # Hypothesen
 
-- Der Nutzertest kann in 15min gemacht werden.
-- Um das Verhalten des Nutzers zu beobachten, senden wir ihm den Link zu unserer App und lassen ihn seinen eigenen Laptop benutzen.
+- Der Nutzertest kann in 15 min durchgeführt werden.
+- Um das Verhalten des Nutzers zu beobachten, senden wir dem Nutzer den App-Link App und lassen ihn seinen eigenen Laptop benutzen.
 - Weil der Nutzer beim App-Demo Day dabei war, sind die Ergebnisse verfälscht.
 - Wir gehen davon aus, dass alle Knöpfe ziemlich selbsterklärend sind.
 
