@@ -25,7 +25,7 @@
 
 ## Layout
 
-11. Tastatur groß + gut sichtbar
+11. Tastatur gross + gut sichtbar
 15. Farbe und Schrift
 
 ## Speichern = Resultate übernehmen
@@ -39,7 +39,7 @@
 
 - Session-state: Zähler jeder der 12 Buttons wird gespeichert
 - Zähler eines bestimmten Buttons wird erhöht, solange nicht 100 überschritten
-- 9 Knöpfe + 3 Joker, Joker Knöpfe + emoji
+- 9 Knöpfe + 3 Knöpfe zum selbst definieren
 - Anzeige des Zählers auf dem Button
 
 ## Gesamtzähler
