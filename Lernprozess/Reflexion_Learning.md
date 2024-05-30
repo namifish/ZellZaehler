@@ -10,15 +10,16 @@ Der erste Nutzertest offenbarte unsere falschen Annahmen. Unsere Buttons waren n
 Alle Buttons wurden klar und deutlich mit deutschen Wörtern beschriftet. Nutzer werden durch die App geleitet, indem manche Knöpfe je nach dem, wo sie sich in der Zählung befinden, verfügbar oder nicht verfügbar sind.
 
 ## 4. Lernerfahrungen
-Wir haben sehr positive Erfahrungen mit der agilen Entwicklung gemacht. Die Produkt-Roadmap hat uns gezwungen, Prioritäten zu setzen.
+Wir haben sehr positive Erfahrungen mit der agilen Entwicklung gemacht. Der Produkt-Roadmap hat uns gezwungen, Prioritäten zu setzen und unwichtige Ideen/Funktionen hinter uns zu lassen. Substraktion ist ein genauso mächtiges Werkzeug wie die Addition.
 
 ## 5. Verbesserungspotenzial
-Eine Smartphone-freundliche Version.
+Wir könnten eine Smartphone-freundliche Version kreieren.
 
 ## 6. Ergebnisse und Erfolge
-Streamlit.io hat ein Tutorial, wie man das Theme selber gestalten kann. Als es auf Anhieb geklappt hat und die App plötzlich bunt war, war das ein echter Erfolgsmoment.
+Der grösste Erfolgsmoment war, als unerwartet die Festlegung des Themes auf Anhieb geklappt hat. Zu diesem Zeitpunkt fehlten noch viele Funktionen und sich um das Aussehen zu kümmern schien überflüssig. Aber Farbe hat unsere App transformiert.
 
 ## 7. Danksagungen und Quellen
-Vielen Dank, Dominik!  
-Merci beaucoup, Samuel!  
+Vielen Dank, Dominik! Dank dir sind wir bei der Suche nach einer guten Projekt-Idee doch noch auf einen grünen Zweig gekommen!
+Merci beaucoup, Samuel! Du hast uns immer vermittelt, dass das Programmieren absolut in unserer Reichweite ist!
+Amal, du warst eine grosse Hilfe. Danke für deine Zeit, die du für die Nutzertests gegeben hast!
 [Streamlit Tutorial für das Theming](https://docs.streamlit.io/develop/concepts/configuration/theming)
