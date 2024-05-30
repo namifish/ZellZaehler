@@ -3,7 +3,7 @@
 ## Tastatur
 
 1. Drei Spalten + vier Reihen/Zeilen
-12. Joker Knöpfe benennen
+12. Knopf, mit dem man den Knöpfen der untersten Reihe einen Namen geben kann
 
 ## Resultate
 
@@ -15,12 +15,12 @@
 
 ## Aktuelle Zählung verwerfen
 
-7. Namensänderung des Buttons
+7. Neuer Name für den Button
 8. Fehler: Reset all counts: man muss 2x klicken
 
 ## Korrekturen
 
-9. Name für Undo-Knopf
+9. Neuer Name für den Undo-Button
 10. Ort Undo-Knopf, evtl. beim Zähler?
 
 ## Layout
@@ -37,8 +37,8 @@
 
 ## Tastatur
 
-- Session-state: Zähler jeder der 12 Buttons wird gespeichert
-- Zähler eines bestimmten Buttons wird erhöht, solange nicht 100 überschritten
+- Session-state: Zähler der 12 Buttons wird gespeichert
+- Zähler eines bestimmten Buttons wird erhöht, solange 100 nicht überschritten ist
 - 9 Knöpfe + 3 Knöpfe zum selbst definieren
 - Anzeige des Zählers auf dem Button
 
