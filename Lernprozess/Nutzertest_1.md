@@ -30,7 +30,7 @@
 ## Neue Ideen
 
 - Die „Benutzer“-Seite überarbeiten.
-  - Statt Knopf für letzte Zählung zurück, eine intuitivere, praktischere Funktion z.B. Knopf „Bearbeiten“, dadurch gehen alle Zählerknöpfe in den Bearbeitungsmodus und können mit + und – Tasten bearbeitet werden.
+- Statt Knopf für letzte Zählung zurück, eine intuitivere, praktischere Funktion z.B. Knopf „Bearbeiten“, dadurch gehen alle Zählerknöpfe in den Bearbeitungsmodus und können mit + und – Tasten bearbeitet werden.
 
 ## Neue Probleme
 
