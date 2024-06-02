@@ -135,22 +135,6 @@ def to_excel(df):
 init_db()
 init_user_data()
 
-#dies ist ein Code zum Überprüfen der Datenbank und ist für die App nicht weiter relevant:
-
-## Funktion zum Anzeigen des Inhalts der Datei
-#def display_file_contents(file_path):
-    #try:
-        #with open(file_path, 'r') as file:
-            #contents = file.read()
-            #st.text("Inhalt der Datei:")
-            #st.text(contents)
-    #except Exception as e:
-        #st.write(f"Fehler beim Lesen der Datei: {e}")
-
-## Zeige den Inhalt der Datei an
-#display_file_contents(LOGIN_FILE)
-
-
 # Streamlit-Anwendung
 st.title("ZellZähler")
 
@@ -593,14 +577,21 @@ else:
                     if new_username:
                         users = load_user_data()
                         if new_username not in users['username'].values:
+                            # Username aktualisieren
                             users.loc[users['username'] == st.session_state['username'], 'username'] = new_username
                             save_user_data(users)
+
+                            conn = sqlite3.connect(DB_FILE)
+                            c = conn.cursor()
+                            c.execute('UPDATE results SET username=? WHERE username=?', (new_username, st.session_state['username']))
+                            conn.commit()
+                            conn.close()
+
                             st.session_state['username'] = new_username
                             st.success("Benutzername erfolgreich geändert.")
                             st.session_state['change_username'] = False
                             time.sleep(4)
                             st.rerun()
-
                         else:
                             st.error("Benutzername existiert bereits.")
                     else:
