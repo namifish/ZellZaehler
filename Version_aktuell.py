@@ -434,13 +434,13 @@ else:
                 st.success("100 Zellen gezählt!")
                 st.write("Ergebnisse:")
                 
-            result_df = pd.DataFrame({'Zellentyp': button_names, 'Anzahl': [st.session_state[f'count_{name}'] for name in button_names]})
-            st.dataframe(result_df, hide_index=True)
+                result_df = pd.DataFrame({'Zellentyp': button_names, 'Anzahl': [st.session_state[f'count_{name}'] for name in button_names]})
+                st.dataframe(result_df, hide_index=True)
 
-            if st.session_state['count_session'] == 1:
-                st.session_state['result_df_1'] = result_df
-            else:
-                st.session_state['result_df_2'] = result_df
+                if st.session_state['count_session'] == 1:
+                    st.session_state['result_df_1'] = result_df
+                else:
+                    st.session_state['result_df_2'] = result_df
 
             if total_count > 100:
                 st.error("Die Gesamtzahl darf 100 nicht überschreiten. Bitte mache den letzten Schritt rückgängig oder korrigiere den Zählerstand.")
