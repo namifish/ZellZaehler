@@ -232,7 +232,7 @@ else:
         st.session_state['count_session'] = 1
 
     if 'custom_names' not in st.session_state:
-        st.session_state['custom_names'] = ["Div1", "Div2", "Div3"]
+        st.session_state['custom_names'] = ["Div1   ", "Div2   ", "Div3   "]
 
     for name in button_names:
         if f'count_{name}' not in st.session_state:
@@ -433,10 +433,14 @@ else:
             if total_count == 100:
                 st.success("100 Zellen gezählt!")
                 st.write("Ergebnisse:")
-                if st.session_state.get('result_df') is None:
-                    result_df = pd.DataFrame({'Zellentyp': button_names, 'Anzahl': [st.session_state[f'count_{name}'] for name in button_names]})
-                    st.session_state['result_df'] = result_df
-                st.dataframe(st.session_state['result_df'], hide_index=True)
+                
+            result_df = pd.DataFrame({'Zellentyp': button_names, 'Anzahl': [st.session_state[f'count_{name}'] for name in button_names]})
+            st.dataframe(result_df, hide_index=True)
+
+            if st.session_state['count_session'] == 1:
+                st.session_state['result_df_1'] = result_df
+            else:
+                st.session_state['result_df_2'] = result_df
 
             if total_count > 100:
                 st.error("Die Gesamtzahl darf 100 nicht überschreiten. Bitte mache den letzten Schritt rückgängig oder korrigiere den Zählerstand.")
@@ -451,8 +455,8 @@ else:
                 col = rows[row_index][col_index]
                 with col:
                     display_name = name
-                    if name in ["Div1", "Div2", "Div3"]:
-                        display_name = st.session_state['custom_names'][int(name[-1]) - 1]
+                    if name.strip() in ["Div1", "Div2", "Div3"]:
+                        display_name = st.session_state['custom_names'][int(name.strip()[-1]) - 1]
                     button_label = f"{display_name}\n({st.session_state[f'count_{name}']})"
                     if st.button(button_label, key=f'button_{name}', use_container_width=True):
                         if not st.session_state['edit_mode'] and not st.session_state['name_edit_mode']:
@@ -467,8 +471,8 @@ else:
 
             if st.session_state['name_edit_mode']:
                 for i in range(3):
-                    new_name = st.text_input(f"Neuer Name für {button_names[9+i]}", value=st.session_state['custom_names'][i], key=f'custom_name_{i}')
-                    st.session_state['custom_names'][i] = new_name
+                    new_name = st.text_input(f"Neuer Name für {button_names[9+i]}", value=st.session_state['custom_names'][i].strip(), key=f'custom_name_{i}')
+                    st.session_state['custom_names'][i] = new_name + '   '
 
             if button_pressed is not None:
                 increment_button_count(button_pressed)
